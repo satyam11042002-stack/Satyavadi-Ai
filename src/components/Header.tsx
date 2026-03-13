@@ -1,8 +1,11 @@
-import { Shield, History } from "lucide-react";
+import { Shield, History, Moon, Sun } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
+import { useTheme } from "next-themes";
+import { Button } from "@/components/ui/button";
 
 const Header = () => {
   const location = useLocation();
+  const { theme, setTheme } = useTheme();
 
   return (
     <header className="w-full border-b border-border bg-background/80 backdrop-blur-sm sticky top-0 z-50">
@@ -35,6 +38,16 @@ const Header = () => {
             <History className="h-4 w-4" />
             History
           </Link>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+            className="ml-1"
+          >
+            <Sun className="h-4 w-4 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
+            <Moon className="absolute h-4 w-4 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
+            <span className="sr-only">Toggle theme</span>
+          </Button>
         </nav>
       </div>
     </header>
