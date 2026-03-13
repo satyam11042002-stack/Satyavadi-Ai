@@ -47,4 +47,6 @@ export interface AnalysisResult {
   mainClaim?: string;
   matchingSources?: string[];
   manipulationSignals?: ManipulationSignal[];
+  detectedLanguage?: string;
+  detectedLanguageName?: string;
 }
