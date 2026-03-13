@@ -4,7 +4,7 @@ import Header from "@/components/Header";
 import AnalysisInput from "@/components/AnalysisInput";
 import ResultPanel from "@/components/ResultPanel";
 import { AnalysisResult } from "@/lib/types";
-import { analyzeNews } from "@/lib/analyze";
+import { analyzeNews, analyzeUrl } from "@/lib/analyze";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
 
@@ -20,6 +20,19 @@ const Index = () => {
       setResult(analysis);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Analysis failed");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleAnalyzeUrl = async (url: string) => {
+    setIsLoading(true);
+    setResult(null);
+    try {
+      const analysis = await analyzeUrl(url);
+      setResult(analysis);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Could not analyze this URL");
     } finally {
       setIsLoading(false);
     }
@@ -52,7 +65,7 @@ const Index = () => {
         {result ? (
           <ResultPanel result={result} onReset={() => setResult(null)} />
         ) : (
-          <AnalysisInput onSubmit={handleAnalyze} isLoading={isLoading} />
+          <AnalysisInput onSubmit={handleAnalyze} onSubmitUrl={handleAnalyzeUrl} isLoading={isLoading} />
         )}
       </main>
     </div>
