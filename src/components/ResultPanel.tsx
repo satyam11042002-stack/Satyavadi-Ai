@@ -1,9 +1,11 @@
 import { AnalysisResult } from "@/lib/types";
 import VerdictBadge from "./VerdictBadge";
+import TrustScoreRing from "./TrustScoreRing";
+import AnalysisSignals from "./AnalysisSignals";
+import ShareCard from "./ShareCard";
 import { motion } from "framer-motion";
-import { Share2, RotateCcw, AlertCircle, Lightbulb, Tag } from "lucide-react";
+import { RotateCcw, AlertCircle, Lightbulb, Tag, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { toast } from "sonner";
 
 interface ResultPanelProps {
   result: AnalysisResult;
@@ -17,20 +19,6 @@ const probabilityColor = (p: number) => {
 };
 
 const ResultPanel = ({ result, onReset }: ResultPanelProps) => {
-  const handleShare = async () => {
-    const msg = `⚠️ This article has a ${result.probability}% probability of being fake news. Verify it with TruthLens!`;
-    try {
-      if (navigator.share) {
-        await navigator.share({ title: "TruthLens Alert", text: msg });
-      } else {
-        await navigator.clipboard.writeText(msg);
-        toast.success("Warning copied to clipboard!");
-      }
-    } catch {
-      // user cancelled share
-    }
-  };
-
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -39,34 +27,55 @@ const ResultPanel = ({ result, onReset }: ResultPanelProps) => {
       className="w-full max-w-3xl mx-auto space-y-4"
     >
       {/* Main verdict card */}
-      <div className="rounded-xl border border-border bg-card p-6 space-y-4">
+      <div className="rounded-xl border border-border bg-card p-6 space-y-5">
         <div className="flex items-start justify-between flex-wrap gap-3">
           <VerdictBadge verdict={result.verdict} />
-          <div className="flex gap-2">
-            <Button variant="outline" size="sm" onClick={handleShare} className="gap-1.5">
-              <Share2 className="h-3.5 w-3.5" /> Share Warning
-            </Button>
-            <Button variant="outline" size="sm" onClick={onReset} className="gap-1.5">
-              <RotateCcw className="h-3.5 w-3.5" /> New Analysis
-            </Button>
+          <Button variant="outline" size="sm" onClick={onReset} className="gap-1.5">
+            <RotateCcw className="h-3.5 w-3.5" /> New Analysis
+          </Button>
+        </div>
+
+        {/* Trust Score + Probability */}
+        <div className="flex flex-col sm:flex-row items-center gap-6">
+          <TrustScoreRing score={result.trustScore} />
+          <div className="flex-1 w-full space-y-1.5">
+            <div className="flex justify-between text-sm">
+              <span className="font-medium text-foreground">Fake News Probability</span>
+              <span className="font-bold text-foreground">{result.probability}%</span>
+            </div>
+            <div className="h-3 rounded-full bg-muted overflow-hidden">
+              <motion.div
+                initial={{ width: 0 }}
+                animate={{ width: `${result.probability}%` }}
+                transition={{ duration: 0.6, ease: "easeOut" }}
+                className={`h-full rounded-full ${probabilityColor(result.probability)}`}
+              />
+            </div>
           </div>
         </div>
 
-        {/* Probability bar */}
-        <div className="space-y-1.5">
-          <div className="flex justify-between text-sm">
-            <span className="font-medium text-foreground">Fake News Probability</span>
-            <span className="font-bold text-foreground">{result.probability}%</span>
+        {/* Extracted headline */}
+        {result.extractedHeadline && (
+          <div className="px-3 py-2 rounded-lg bg-muted/50 border border-border">
+            <p className="text-xs text-muted-foreground mb-0.5">Extracted Headline</p>
+            <p className="text-sm font-semibold text-foreground">{result.extractedHeadline}</p>
+            {result.sourceUrl && (
+              <a
+                href={result.sourceUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-xs text-primary hover:underline inline-flex items-center gap-1 mt-1"
+              >
+                <ExternalLink className="h-3 w-3" /> View Source
+              </a>
+            )}
           </div>
-          <div className="h-3 rounded-full bg-muted overflow-hidden">
-            <motion.div
-              initial={{ width: 0 }}
-              animate={{ width: `${result.probability}%` }}
-              transition={{ duration: 0.6, ease: "easeOut" }}
-              className={`h-full rounded-full ${probabilityColor(result.probability)}`}
-            />
-          </div>
-        </div>
+        )}
+
+        {/* Analysis Signals */}
+        {result.signals && result.signals.length > 0 && (
+          <AnalysisSignals signals={result.signals} />
+        )}
 
         {/* Reasons */}
         <div className="space-y-2">
@@ -120,6 +129,12 @@ const ResultPanel = ({ result, onReset }: ResultPanelProps) => {
             ))}
           </ul>
         </div>
+      </div>
+
+      {/* Share Card */}
+      <div className="rounded-xl border border-border bg-card p-5 space-y-3">
+        <h3 className="text-sm font-semibold text-foreground">Share This Analysis</h3>
+        <ShareCard result={result} />
       </div>
 
       {/* Original text preview */}

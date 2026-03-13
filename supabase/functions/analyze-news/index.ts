@@ -12,9 +12,68 @@ serve(async (req) => {
   }
 
   try {
-    const { text } = await req.json();
+    const { text, url } = await req.json();
 
-    if (!text || text.trim().length < 20) {
+    let articleText = text;
+    let extractedHeadline = "";
+    let sourceUrl = url || "";
+
+    // If URL provided, fetch and extract content
+    if (url && !text) {
+      try {
+        const fetchRes = await fetch(url, {
+          headers: { "User-Agent": "Mozilla/5.0 (compatible; TruthLens/1.0)" },
+        });
+        if (!fetchRes.ok) {
+          return new Response(
+            JSON.stringify({ error: "Could not fetch the article. The website may be blocking automated access. Try pasting the article text directly." }),
+            { status: 422, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          );
+        }
+        const html = await fetchRes.text();
+
+        // Extract title
+        const titleMatch = html.match(/<title[^>]*>([\s\S]*?)<\/title>/i);
+        extractedHeadline = titleMatch ? titleMatch[1].replace(/\s+/g, " ").trim() : "";
+
+        // Try og:title
+        const ogTitle = html.match(/<meta[^>]*property=["']og:title["'][^>]*content=["']([^"']*)["']/i);
+        if (ogTitle) extractedHeadline = ogTitle[1].trim();
+
+        // Strip HTML tags and extract text content
+        const bodyMatch = html.match(/<body[^>]*>([\s\S]*?)<\/body>/i);
+        const bodyHtml = bodyMatch ? bodyMatch[1] : html;
+        // Remove scripts, styles, nav, header, footer, aside
+        const cleaned = bodyHtml
+          .replace(/<script[\s\S]*?<\/script>/gi, "")
+          .replace(/<style[\s\S]*?<\/style>/gi, "")
+          .replace(/<nav[\s\S]*?<\/nav>/gi, "")
+          .replace(/<header[\s\S]*?<\/header>/gi, "")
+          .replace(/<footer[\s\S]*?<\/footer>/gi, "")
+          .replace(/<aside[\s\S]*?<\/aside>/gi, "")
+          .replace(/<[^>]+>/g, " ")
+          .replace(/&[a-z]+;/gi, " ")
+          .replace(/\s+/g, " ")
+          .trim();
+
+        if (cleaned.length < 50) {
+          return new Response(
+            JSON.stringify({ error: "Could not extract enough text from this URL. Try pasting the article text directly." }),
+            { status: 422, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          );
+        }
+
+        articleText = cleaned;
+      } catch (e) {
+        console.error("URL fetch error:", e);
+        return new Response(
+          JSON.stringify({ error: "Could not access this URL. Please check the link or paste the article text instead." }),
+          { status: 422, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+    }
+
+    if (!articleText || articleText.trim().length < 20) {
       return new Response(
         JSON.stringify({ error: "Text must be at least 20 characters" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -32,10 +91,18 @@ You MUST respond with valid JSON only, no markdown, no explanation outside the J
 {
   "verdict": "real" | "misleading" | "fake",
   "probability": <number 0-100 representing fake news probability>,
+  "trustScore": <number 0-100 representing trust/credibility score. 0-30=likely fake, 31-60=possibly misleading, 61-100=likely real>,
   "reasons": [<3-5 short strings explaining key findings>],
   "suspiciousKeywords": [<0-5 words/phrases from the text that are suspicious>],
   "factCheckSuggestions": [<2-4 actionable suggestions for verifying the claims>],
-  "explanation": "<2-3 sentence explanation of the analysis>"
+  "explanation": "<2-3 sentence explanation of the analysis>",
+  "signals": [
+    {"label": "Emotional/Sensational Language", "detected": <boolean>, "severity": "low"|"medium"|"high"},
+    {"label": "Suspicious/Exaggerated Claims", "detected": <boolean>, "severity": "low"|"medium"|"high"},
+    {"label": "Lack of Credible Sources", "detected": <boolean>, "severity": "low"|"medium"|"high"},
+    {"label": "Logical Inconsistencies", "detected": <boolean>, "severity": "low"|"medium"|"high"},
+    {"label": "Clickbait Headline Patterns", "detected": <boolean>, "severity": "low"|"medium"|"high"}
+  ]
 }
 
 Analysis criteria:
@@ -57,7 +124,7 @@ Analysis criteria:
         model: "google/gemini-3-flash-preview",
         messages: [
           { role: "system", content: systemPrompt },
-          { role: "user", content: `Analyze this news text for authenticity:\n\n${text.slice(0, 5000)}` },
+          { role: "user", content: `Analyze this news text for authenticity:\n\n${articleText.slice(0, 5000)}` },
         ],
       }),
     });
@@ -87,13 +154,16 @@ Analysis criteria:
       throw new Error("No response from AI");
     }
 
-    // Parse the JSON from the AI response
     const jsonMatch = content.match(/\{[\s\S]*\}/);
     if (!jsonMatch) {
       throw new Error("Could not parse AI response");
     }
 
     const result = JSON.parse(jsonMatch[0]);
+
+    // Attach URL metadata
+    if (extractedHeadline) result.extractedHeadline = extractedHeadline;
+    if (sourceUrl) result.sourceUrl = sourceUrl;
 
     return new Response(JSON.stringify(result), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
