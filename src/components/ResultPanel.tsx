@@ -4,7 +4,7 @@ import TrustScoreRing from "./TrustScoreRing";
 import AnalysisSignals from "./AnalysisSignals";
 import ShareCard from "./ShareCard";
 import { motion } from "framer-motion";
-import { RotateCcw, AlertCircle, Lightbulb, Tag, ExternalLink } from "lucide-react";
+import { RotateCcw, AlertCircle, Lightbulb, Tag, ExternalLink, ShieldCheck, Users, MapPin, Calendar } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface ResultPanelProps {
@@ -16,6 +16,18 @@ const probabilityColor = (p: number) => {
   if (p < 35) return "bg-success";
   if (p < 65) return "bg-warning";
   return "bg-destructive";
+};
+
+const layerStatusColor = (status: string) => {
+  if (["confirmed", "matched", "high"].includes(status)) return "text-success";
+  if (["unverified", "partial", "medium"].includes(status)) return "text-warning";
+  return "text-destructive";
+};
+
+const layerStatusBg = (status: string) => {
+  if (["confirmed", "matched", "high"].includes(status)) return "bg-success/10 border-success/20";
+  if (["unverified", "partial", "medium"].includes(status)) return "bg-warning/10 border-warning/20";
+  return "bg-destructive/10 border-destructive/20";
 };
 
 const ResultPanel = ({ result, onReset }: ResultPanelProps) => {
@@ -69,6 +81,59 @@ const ResultPanel = ({ result, onReset }: ResultPanelProps) => {
                 <ExternalLink className="h-3 w-3" /> View Source
               </a>
             )}
+          </div>
+        )}
+
+        {/* Verification Layers */}
+        {result.verificationLayers && (
+          <div className="space-y-2">
+            <h3 className="text-sm font-semibold text-foreground flex items-center gap-1.5">
+              <ShieldCheck className="h-4 w-4 text-primary" /> Multi-Layer Verification
+            </h3>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+              {[
+                { key: "eventVerification", label: "Event Verification", data: result.verificationLayers.eventVerification },
+                { key: "entityRecognition", label: "Entity Recognition", data: result.verificationLayers.entityRecognition },
+                { key: "sourceCredibility", label: "Source Credibility", data: result.verificationLayers.sourceCredibility },
+              ].map(({ key, label, data }) => (
+                <div key={key} className={`rounded-lg border p-3 ${layerStatusBg(data.status)}`}>
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-xs font-semibold text-foreground">{label}</span>
+                    <span className={`text-xs font-bold uppercase ${layerStatusColor(data.status)}`}>{data.status}</span>
+                  </div>
+                  <p className="text-xs text-muted-foreground leading-relaxed">{data.detail}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Extracted Entities */}
+        {result.entities && (
+          <div className="space-y-2">
+            <h3 className="text-sm font-semibold text-foreground flex items-center gap-1.5">
+              <Users className="h-4 w-4 text-muted-foreground" /> Extracted Entities
+            </h3>
+            <div className="flex flex-wrap gap-1.5">
+              {result.entities.people?.map((e, i) => (
+                <span key={`p-${i}`} className="px-2 py-0.5 text-xs rounded-md bg-primary/10 text-primary font-medium inline-flex items-center gap-1">
+                  <Users className="h-3 w-3" />{e}
+                </span>
+              ))}
+              {result.entities.locations?.map((e, i) => (
+                <span key={`l-${i}`} className="px-2 py-0.5 text-xs rounded-md bg-accent/50 text-accent-foreground font-medium inline-flex items-center gap-1">
+                  <MapPin className="h-3 w-3" />{e}
+                </span>
+              ))}
+              {result.entities.organizations?.map((e, i) => (
+                <span key={`o-${i}`} className="px-2 py-0.5 text-xs rounded-md bg-secondary text-secondary-foreground font-medium">{e}</span>
+              ))}
+              {result.entities.events?.map((e, i) => (
+                <span key={`e-${i}`} className="px-2 py-0.5 text-xs rounded-md bg-muted text-muted-foreground font-medium inline-flex items-center gap-1">
+                  <Calendar className="h-3 w-3" />{e}
+                </span>
+              ))}
+            </div>
           </div>
         )}
 

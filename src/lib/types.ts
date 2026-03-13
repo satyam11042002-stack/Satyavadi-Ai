@@ -6,6 +6,18 @@ export interface AnalysisSignal {
   severity: "low" | "medium" | "high";
 }
 
+export interface VerificationLayer {
+  status: string;
+  detail: string;
+}
+
+export interface ExtractedEntities {
+  people: string[];
+  organizations: string[];
+  locations: string[];
+  events: string[];
+}
+
 export interface AnalysisResult {
   id: string;
   verdict: Verdict;
@@ -20,4 +32,10 @@ export interface AnalysisResult {
   sourceUrl?: string;
   extractedHeadline?: string;
   signals: AnalysisSignal[];
+  entities?: ExtractedEntities;
+  verificationLayers?: {
+    eventVerification: VerificationLayer;
+    entityRecognition: VerificationLayer;
+    sourceCredibility: VerificationLayer;
+  };
 }

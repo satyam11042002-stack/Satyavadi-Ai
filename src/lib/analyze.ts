@@ -65,6 +65,8 @@ function buildResult(
     sourceUrl: sourceUrl || data.sourceUrl,
     extractedHeadline: extractedHeadline || data.extractedHeadline,
     signals: data.signals || [],
+    entities: data.entities,
+    verificationLayers: data.verificationLayers,
   };
 
   saveToHistory(result);
