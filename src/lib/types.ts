@@ -18,6 +18,12 @@ export interface ExtractedEntities {
   events: string[];
 }
 
+export interface ManipulationSignal {
+  phrase: string;
+  technique: string;
+  explanation: string;
+}
+
 export interface AnalysisResult {
   id: string;
   verdict: Verdict;
@@ -38,4 +44,7 @@ export interface AnalysisResult {
     entityRecognition: VerificationLayer;
     sourceCredibility: VerificationLayer;
   };
+  mainClaim?: string;
+  matchingSources?: string[];
+  manipulationSignals?: ManipulationSignal[];
 }

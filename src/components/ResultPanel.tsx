@@ -4,7 +4,11 @@ import TrustScoreRing from "./TrustScoreRing";
 import AnalysisSignals from "./AnalysisSignals";
 import ShareCard from "./ShareCard";
 import { motion } from "framer-motion";
-import { RotateCcw, AlertCircle, Lightbulb, Tag, ExternalLink, ShieldCheck, Users, MapPin, Calendar } from "lucide-react";
+import {
+  RotateCcw, AlertCircle, Lightbulb, Tag, ExternalLink,
+  ShieldCheck, Users, MapPin, Calendar, Quote, Newspaper,
+  AlertTriangle, Eye
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface ResultPanelProps {
@@ -66,6 +70,18 @@ const ResultPanel = ({ result, onReset }: ResultPanelProps) => {
           </div>
         </div>
 
+        {/* Main Claim Detected */}
+        {result.mainClaim && (
+          <div className="px-4 py-3 rounded-lg bg-primary/5 border border-primary/20">
+            <h3 className="text-xs font-semibold text-primary uppercase tracking-wider mb-1 flex items-center gap-1.5">
+              <Quote className="h-3.5 w-3.5" /> Main Claim Detected
+            </h3>
+            <p className="text-sm font-medium text-foreground leading-relaxed">
+              "{result.mainClaim}"
+            </p>
+          </div>
+        )}
+
         {/* Extracted headline */}
         {result.extractedHeadline && (
           <div className="px-3 py-2 rounded-lg bg-muted/50 border border-border">
@@ -108,6 +124,36 @@ const ResultPanel = ({ result, onReset }: ResultPanelProps) => {
           </div>
         )}
 
+        {/* Source Confirmation */}
+        {result.matchingSources && result.matchingSources.length > 0 && (
+          <div className="space-y-2">
+            <h3 className="text-sm font-semibold text-foreground flex items-center gap-1.5">
+              <Newspaper className="h-4 w-4 text-success" /> Source Confirmation
+            </h3>
+            <div className="px-3 py-2.5 rounded-lg bg-success/5 border border-success/20">
+              <p className="text-xs text-muted-foreground mb-2">Sources reporting similar claim:</p>
+              <div className="flex flex-wrap gap-1.5">
+                {result.matchingSources.map((source, i) => (
+                  <span
+                    key={i}
+                    className="px-2.5 py-1 text-xs rounded-full bg-success/10 text-success font-medium border border-success/20"
+                  >
+                    {source}
+                  </span>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+        {result.matchingSources && result.matchingSources.length === 0 && (
+          <div className="px-3 py-2.5 rounded-lg bg-warning/5 border border-warning/20">
+            <h3 className="text-sm font-semibold text-foreground flex items-center gap-1.5 mb-1">
+              <Newspaper className="h-4 w-4 text-warning" /> Source Confirmation
+            </h3>
+            <p className="text-xs text-warning">No confirmation from major news sources.</p>
+          </div>
+        )}
+
         {/* Extracted Entities */}
         {result.entities && (
           <div className="space-y-2">
@@ -132,6 +178,35 @@ const ResultPanel = ({ result, onReset }: ResultPanelProps) => {
                 <span key={`e-${i}`} className="px-2 py-0.5 text-xs rounded-md bg-muted text-muted-foreground font-medium inline-flex items-center gap-1">
                   <Calendar className="h-3 w-3" />{e}
                 </span>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Manipulation Signals */}
+        {result.manipulationSignals && result.manipulationSignals.length > 0 && (
+          <div className="space-y-2">
+            <h3 className="text-sm font-semibold text-foreground flex items-center gap-1.5">
+              <Eye className="h-4 w-4 text-destructive" /> Manipulation Signals
+            </h3>
+            <div className="space-y-2">
+              {result.manipulationSignals.map((signal, i) => (
+                <motion.div
+                  key={i}
+                  initial={{ opacity: 0, x: -10 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: i * 0.1 }}
+                  className="px-3 py-2.5 rounded-lg bg-destructive/5 border border-destructive/15"
+                >
+                  <div className="flex items-start gap-2">
+                    <AlertTriangle className="h-3.5 w-3.5 text-destructive shrink-0 mt-0.5" />
+                    <div className="space-y-1">
+                      <p className="text-xs font-semibold text-destructive">{signal.technique}</p>
+                      <p className="text-xs text-foreground italic">"{signal.phrase}"</p>
+                      <p className="text-xs text-muted-foreground">{signal.explanation}</p>
+                    </div>
+                  </div>
+                </motion.div>
               ))}
             </div>
           </div>

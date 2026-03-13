@@ -67,6 +67,9 @@ function buildResult(
     signals: data.signals || [],
     entities: data.entities,
     verificationLayers: data.verificationLayers,
+    mainClaim: data.mainClaim,
+    matchingSources: data.matchingSources || [],
+    manipulationSignals: data.manipulationSignals || [],
   };
 
   saveToHistory(result);
