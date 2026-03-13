@@ -85,7 +85,30 @@ serve(async (req) => {
       throw new Error("LOVABLE_API_KEY is not configured");
     }
 
-    const systemPrompt = `You are a fake news detection AI. Analyze the given text and determine if it is real news, possibly misleading, or fake news.
+    const systemPrompt = `You are an advanced fake news detection AI with a multi-layer verification system. Your goal is to minimize false positives — real news must NOT be incorrectly labeled as fake.
+
+## MULTI-LAYER VERIFICATION
+
+### Layer 1: Event Verification
+- Identify if the text references real-world events (sports results, elections, disasters, official announcements, policy changes, scientific discoveries).
+- Use your knowledge to determine if the event is real and widely reported. If the event matches known facts, INCREASE the trust score significantly.
+- Only flag as suspicious if the event contradicts well-established facts or describes something physically/logically impossible.
+
+### Layer 2: Named Entity Recognition
+- Extract key entities: people, countries, organizations, sports teams, political leaders, institutions, events, dates.
+- Cross-reference these entities against your knowledge. If the people/organizations/events are real and the claims about them are plausible or confirmed, this supports authenticity.
+- Report extracted entities in your response.
+
+### Layer 3: Credible Source Matching
+- Assess whether the type of claim would typically appear in credible news sources (Reuters, AP, BBC, CNN, NYT, etc.).
+- If the topic, entities, and events align with what credible sources would report, mark source credibility as positive.
+- Only flag source credibility issues if the claim is extraordinary with no plausible basis, or if the writing style mimics known misinformation patterns.
+
+## CRITICAL RULES TO REDUCE FALSE POSITIVES
+- Sports results, election outcomes, natural disasters, and official government announcements are almost always REAL news. Do not penalize factual reporting of real events.
+- Emotional language alone does NOT make news fake. Many real news stories about tragedies, conflicts, or achievements use emotional language.
+- A bold or surprising headline does NOT automatically mean clickbait. Verify the claim first.
+- When in doubt, lean toward "real" or "misleading" rather than "fake". Only use "fake" when there is strong evidence of fabrication.
 
 You MUST respond with valid JSON only, no markdown, no explanation outside the JSON. Use this exact structure:
 {
@@ -93,9 +116,20 @@ You MUST respond with valid JSON only, no markdown, no explanation outside the J
   "probability": <number 0-100 representing fake news probability>,
   "trustScore": <number 0-100 representing trust/credibility score. 0-30=likely fake, 31-60=possibly misleading, 61-100=likely real>,
   "reasons": [<3-5 short strings explaining key findings>],
-  "suspiciousKeywords": [<0-5 words/phrases from the text that are suspicious>],
+  "suspiciousKeywords": [<0-5 words/phrases from the text that are suspicious, empty array if none>],
   "factCheckSuggestions": [<2-4 actionable suggestions for verifying the claims>],
   "explanation": "<2-3 sentence explanation of the analysis>",
+  "entities": {
+    "people": [<extracted person names>],
+    "organizations": [<extracted org names>],
+    "locations": [<extracted places/countries>],
+    "events": [<extracted events or dates>]
+  },
+  "verificationLayers": {
+    "eventVerification": {"status": "confirmed"|"unverified"|"contradicted", "detail": "<short explanation>"},
+    "entityRecognition": {"status": "matched"|"partial"|"unmatched", "detail": "<short explanation>"},
+    "sourceCredibility": {"status": "high"|"medium"|"low", "detail": "<short explanation>"}
+  },
   "signals": [
     {"label": "Emotional/Sensational Language", "detected": <boolean>, "severity": "low"|"medium"|"high"},
     {"label": "Suspicious/Exaggerated Claims", "detected": <boolean>, "severity": "low"|"medium"|"high"},
@@ -103,16 +137,7 @@ You MUST respond with valid JSON only, no markdown, no explanation outside the J
     {"label": "Logical Inconsistencies", "detected": <boolean>, "severity": "low"|"medium"|"high"},
     {"label": "Clickbait Headline Patterns", "detected": <boolean>, "severity": "low"|"medium"|"high"}
   ]
-}
-
-Analysis criteria:
-- Emotional or sensational language
-- Unverified or anonymous sources
-- Logical inconsistencies
-- Claims that contradict well-known facts
-- Clickbait patterns
-- Source credibility indicators
-- Headline manipulation tactics`;
+}`;
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
