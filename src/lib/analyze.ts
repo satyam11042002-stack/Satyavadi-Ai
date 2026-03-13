@@ -70,6 +70,8 @@ function buildResult(
     mainClaim: data.mainClaim,
     matchingSources: data.matchingSources || [],
     manipulationSignals: data.manipulationSignals || [],
+    detectedLanguage: data.detectedLanguage,
+    detectedLanguageName: data.detectedLanguageName,
   };
 
   saveToHistory(result);
