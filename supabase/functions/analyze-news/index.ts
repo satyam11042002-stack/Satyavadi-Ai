@@ -27,14 +27,6 @@ const KNOWN_CLAIMS = [
   { claim: "Elon Musk bought Twitter in 2022", status: "real", sources: ["Reuters", "BBC", "NYT"] },
 ];
 
-function tokenize(text: string): string[] {
-  return text
-    .toLowerCase()
-    .replace(/[^a-z0-9\s]/g, "")
-    .split(/\s+/)
-    .filter((w) => w.length > 2 && !STOP_WORDS.has(w));
-}
-
 const STOP_WORDS = new Set([
   "the", "a", "an", "is", "are", "was", "were", "be", "been", "being",
   "have", "has", "had", "do", "does", "did", "will", "would", "could",
@@ -49,6 +41,14 @@ const STOP_WORDS = new Set([
   "those", "it", "its", "they", "them", "their", "we", "our", "you",
   "your", "he", "him", "his", "she", "her", "who", "which", "what",
 ]);
+
+function tokenize(text: string): string[] {
+  return text
+    .toLowerCase()
+    .replace(/[^a-z0-9\s]/g, "")
+    .split(/\s+/)
+    .filter((w) => w.length > 2 && !STOP_WORDS.has(w));
+}
 
 function cosineSimilarity(textA: string, textB: string): number {
   const tokensA = tokenize(textA);
@@ -135,7 +135,7 @@ A similar claim was found in our verified claims database:
 - Verified By: ${claimMatch.claim.sources.join(", ")}
 - Similarity Score: ${(claimMatch.similarity * 100).toFixed(0)}%
 
-IMPORTANT: Use this database match as strong evidence. If similarity is very high (>80%), heavily weight this match in your verdict. A "fake" database status should push the verdict toward fake, and "real" should push toward real.
+IMPORTANT: Use this database match as strong evidence. If similarity is very high (>80%), heavily weight this match in your verdict.
 `;
   }
 
@@ -143,66 +143,94 @@ IMPORTANT: Use this database match as strong evidence. If similarity is very hig
 
 IMPORTANT: The current date is ${new Date().toISOString().split("T")[0]}. Use this for temporal reasoning about events.
 ${claimContext}
+## 5-CATEGORY VERDICT SYSTEM (CRITICAL)
+You MUST classify every claim into exactly ONE of these 5 categories:
+
+1. "verified_real" — Claim matches confirmed events verified by multiple credible sources. Use when evidence is strong and clear.
+2. "likely_real" — Claim aligns with credible reporting but may lack full confirmation. Minor concerns but generally trustworthy.
+3. "future_planned" — Claim references a future event, a planned initiative, or something scheduled that has NOT happened yet. Use when:
+   - Text contains future indicators: "will", "by 2030", "by 2035", "expected", "planned", "scheduled", "aims to", "target", "upcoming"
+   - Event date is after the current date
+   - A credible authority (NASA, ISRO, WHO, government) is mentioned → "future_planned"
+   - No credible authority → still use "future_planned" but with lower confidence
+   - NEVER classify future events as "likely_fake" unless there is strong evidence of fabrication
+4. "unverified" — Cannot confirm or deny. No strong evidence either way. Use when:
+   - No credible sources confirm OR deny the claim
+   - System is not confident in any other category
+   - ALWAYS prefer "unverified" over "likely_fake" when in doubt
+5. "likely_fake" — Strong evidence of fabrication, contradiction by trusted sources, or known misinformation pattern. ONLY use when:
+   - Claim directly contradicts established verified facts
+   - Claim matches known misinformation in the database
+   - Multiple credible sources actively debunk the claim
+
+## CONFIDENCE SCORE
+You MUST provide a "confidence" field (0-100) indicating how confident you are in your verdict:
+- 90-100: Very high confidence, strong evidence
+- 70-89: Good confidence, solid evidence
+- 50-69: Moderate confidence, some uncertainty
+- 0-49: Low confidence, significant uncertainty
+
+## DECISION PRIORITY ORDER
+1. Claim matches database with high similarity → Use database status (verified_real or likely_fake)
+2. Future claim detected → "future_planned"
+3. Trusted sources confirm → "likely_real" or "verified_real"
+4. Strong manipulation signals + no sources → "likely_fake"
+5. Otherwise → "unverified"
+
+## AUTHORITY DETECTION
+Detect trusted organizations in the text. If present, increase trust score:
+NASA, ISRO, WHO, UN, EU, major government bodies, established universities, CDC, FDA, IPCC, World Bank, IMF
+
 ## LANGUAGE HANDLING
 - Detect the language of the input text.
-- Perform all analysis internally.
-- Return the "explanation", "reasons", "factCheckSuggestions", and "mainClaim" fields in the SAME LANGUAGE as the input text.
-- Return "detectedLanguage" as an ISO 639-1 code (e.g. "hi", "es", "en", "ar").
-- Return "detectedLanguageName" as the English name of the language (e.g. "Hindi", "Spanish").
+- Return "explanation", "reasons", "factCheckSuggestions", and "mainClaim" in the SAME LANGUAGE as the input.
+- Return "detectedLanguage" as ISO 639-1 code and "detectedLanguageName" as English name.
 
 ## PIPELINE
 
 ### Step 1: Claim Extraction
-- Identify the single most important factual claim in the text.
-- The claim should be a specific, verifiable statement.
+- Identify the single most important factual claim.
 - Focus on key subjects, events, numerical facts, dates.
 
-### Step 2: Event Verification
-- Check if the claim references a real-world event.
-- Use the current date to determine if the event is in the past, present, or future.
+### Step 2: Future Event Detection
+- Check for future indicators: "will", "by 20XX", "expected", "planned", "scheduled", "aims to", "target"
+- Compare event dates against current date ${new Date().toISOString().split("T")[0]}
+- Future events → "future_planned", NEVER "likely_fake"
+
+### Step 3: Event Verification
 - THREE possible outcomes:
-  - "confirmed": Event happened and is verified by your knowledge.
-  - "unverified": Event is scheduled for the future, or there is no information to confirm it. This is NOT the same as fake.
-  - "contradicted": Event is impossible or directly contradicts established facts.
-- CRITICAL: Future events (events that haven't happened yet based on the current date) MUST be marked as "unverified", NOT "contradicted" or fake. Example: "India won the 2026 T20 World Cup" → if the date is before the event, mark as "unverified" with detail "This event has not occurred yet."
+  - "confirmed": Event happened and is verified
+  - "unverified": Future event or no information to confirm
+  - "contradicted": Impossible or directly contradicts established facts
 
-### Step 3: Named Entity Recognition
-- Extract people, countries, organizations, sports teams, political leaders, institutions, events, dates.
-- Cross-reference against your knowledge.
+### Step 4: Named Entity Recognition
+- Extract people, organizations, locations, events
+- Check for trusted authorities
 
-### Step 4: Credible Source Matching
-- List specific trusted news sources (Reuters, AP, BBC, CNN, NYT, Al Jazeera, The Guardian, The Hindu, NDTV, Indian Express, etc.) that would likely report this type of story.
-- If the claim aligns with credible reporting, mark source credibility as positive.
+### Step 5: Trusted Source Matching
+- List specific trusted sources that would report this story
+- If sources confirm → increase trust score
 
-### Step 5: Manipulation Detection
-- Analyze for psychological manipulation techniques: fear-based language, urgency to share, emotional exaggeration, conspiracy-style wording, dramatic/sensational phrasing, WhatsApp forward patterns ("forward this to everyone", "share immediately", "government secretly announced").
-- For each detected technique, extract the specific phrase, name the technique, and explain why it's manipulative.
-
-### Step 6: Signal Analysis
-- Evaluate: emotional language, suspicious claims, source credibility gaps, logical inconsistencies, clickbait patterns.
-
-## CRITICAL RULES FOR REDUCING FALSE POSITIVES
-- Sports results, election outcomes, natural disasters, and official government announcements are almost always REAL news when they reference past events.
-- Future events that haven't happened yet should be marked as "unverified", NOT "fake".
-- Emotional language alone does NOT make news fake.
-- A bold headline does NOT automatically mean clickbait.
-- When in doubt, lean toward "real" or "misleading" rather than "fake".
-- Only mark something as "fake" when there is strong evidence of fabrication or contradiction.
-- WhatsApp forward patterns (urgency, fear, conspiracy) should increase suspicion but not automatically mark as fake.
-- If a claim is simply unverifiable (no sources confirm OR deny it), mark as "misleading" with an explanation, NOT "fake".
+### Step 6: Manipulation Detection
+- Detect fear-based language, urgency, emotional exaggeration, conspiracy wording
+- Extract specific phrases and explain techniques
 
 ## TRUST SCORE INTERPRETATION
-The trustScore should reflect cumulative evidence:
-- 80-100: Multiple credible sources confirm. Event verified. No manipulation signals.
+- 80-100: Multiple credible sources confirm. Verified event. No manipulation.
 - 60-79: Some credible sources. Event likely real. Minor concerns.
-- 40-59: Unverified. No strong confirmation or denial. Mixed signals.
-- 0-39: Contradicted by evidence. Known misinformation pattern. Strong manipulation signals.
+- 40-59: Unverified. No strong confirmation or denial.
+- 0-39: Contradicted by evidence. Known misinformation.
+
+## SAFE CLASSIFICATION RULE
+If the system is not confident → return "unverified" instead of "likely_fake".
+Avoid false positives at all costs.
 
 You MUST respond with valid JSON only, no markdown. Use this exact structure:
 {
-  "verdict": "real" | "misleading" | "fake",
+  "verdict": "verified_real" | "likely_real" | "future_planned" | "unverified" | "likely_fake",
   "probability": <number 0-100, fake news probability>,
   "trustScore": <number 0-100>,
+  "confidence": <number 0-100, how confident the system is in this verdict>,
   "mainClaim": "<the single most important factual claim, IN THE ORIGINAL LANGUAGE>",
   "reasons": [<3-5 short strings explaining key findings, IN THE ORIGINAL LANGUAGE>],
   "suspiciousKeywords": [<0-5 suspicious words/phrases, empty if none>],
