@@ -8,7 +8,8 @@ import { motion } from "framer-motion";
 import {
   RotateCcw, AlertCircle, Lightbulb, Tag, ExternalLink,
   ShieldCheck, Users, MapPin, Calendar, Quote, Newspaper,
-  AlertTriangle, Eye, Volume2, VolumeX
+  AlertTriangle, Eye, Volume2, VolumeX, Database, CheckCircle2,
+  XCircle, HelpCircle
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
@@ -44,31 +45,27 @@ const ResultPanel = ({ result, onReset }: ResultPanelProps) => {
       toast.error("Text-to-speech not supported in this browser");
       return;
     }
-
     if (isSpeaking) {
       window.speechSynthesis.cancel();
       setIsSpeaking(false);
       return;
     }
-
     const verdictText = result.verdict === "real" ? "likely real" : result.verdict === "misleading" ? "possibly misleading" : "likely fake";
     const speechText = `According to TruthLens analysis, this claim appears to be ${verdictText} with a trust score of ${result.trustScore} out of 100. ${result.explanation}`;
-
     const utterance = new SpeechSynthesisUtterance(speechText);
     utterance.rate = 0.95;
     utterance.onend = () => setIsSpeaking(false);
     utterance.onerror = () => setIsSpeaking(false);
-
-    // Try to detect language from the result
     if (result.detectedLanguage && result.detectedLanguage !== "en") {
       const voices = window.speechSynthesis.getVoices();
       const langVoice = voices.find(v => v.lang.startsWith(result.detectedLanguage!));
       if (langVoice) utterance.voice = langVoice;
     }
-
     window.speechSynthesis.speak(utterance);
     setIsSpeaking(true);
   };
+
+  const dbMatch = result.claimDatabaseMatch;
 
   return (
     <motion.div
@@ -127,6 +124,50 @@ const ResultPanel = ({ result, onReset }: ResultPanelProps) => {
               "{result.mainClaim}"
             </p>
           </div>
+        )}
+
+        {/* Claim Database Match */}
+        {dbMatch?.matched && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.98 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className={`px-4 py-3 rounded-xl border ${
+              dbMatch.matchedStatus === "fake"
+                ? "bg-destructive/5 border-destructive/20"
+                : dbMatch.matchedStatus === "real"
+                ? "bg-success/5 border-success/20"
+                : "bg-warning/5 border-warning/20"
+            }`}
+          >
+            <h3 className="text-xs font-semibold uppercase tracking-wider mb-2 flex items-center gap-1.5 text-foreground">
+              <Database className="h-3.5 w-3.5 text-primary" /> Claims Database Match
+            </h3>
+            <div className="flex items-start gap-3">
+              {dbMatch.matchedStatus === "fake" ? (
+                <XCircle className="h-5 w-5 text-destructive shrink-0 mt-0.5" />
+              ) : dbMatch.matchedStatus === "real" ? (
+                <CheckCircle2 className="h-5 w-5 text-success shrink-0 mt-0.5" />
+              ) : (
+                <HelpCircle className="h-5 w-5 text-warning shrink-0 mt-0.5" />
+              )}
+              <div className="space-y-1">
+                <p className="text-sm font-medium text-foreground">"{dbMatch.matchedClaim}"</p>
+                <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                  <span>
+                    Status:{" "}
+                    <span className={`font-bold uppercase ${
+                      dbMatch.matchedStatus === "fake" ? "text-destructive"
+                      : dbMatch.matchedStatus === "real" ? "text-success"
+                      : "text-warning"
+                    }`}>
+                      {dbMatch.matchedStatus}
+                    </span>
+                  </span>
+                  <span>Similarity: {dbMatch.similarityScore}%</span>
+                </div>
+              </div>
+            </div>
+          </motion.div>
         )}
 
         {/* Extracted headline */}
@@ -272,10 +313,11 @@ const ResultPanel = ({ result, onReset }: ResultPanelProps) => {
         </div>
       </div>
 
-      {/* Why this may be misleading */}
+      {/* Explainable AI - Why this verdict */}
       <div className="rounded-2xl glass-card p-5 space-y-3">
         <h3 className="text-sm font-semibold text-foreground flex items-center gap-1.5">
-          <Lightbulb className="h-4 w-4 text-warning" /> Why This May Be {result.verdict === "real" ? "Credible" : "Misleading"}
+          <Lightbulb className="h-4 w-4 text-warning" /> Why This Claim Is{" "}
+          {result.verdict === "real" ? "Credible" : result.verdict === "misleading" ? "Possibly Misleading" : "Likely Fake"}
         </h3>
         <p className="text-sm text-muted-foreground leading-relaxed">{result.explanation}</p>
         {result.suspiciousKeywords.length > 0 && (

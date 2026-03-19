@@ -72,6 +72,7 @@ function buildResult(
     manipulationSignals: data.manipulationSignals || [],
     detectedLanguage: data.detectedLanguage,
     detectedLanguageName: data.detectedLanguageName,
+    claimDatabaseMatch: data.claimDatabaseMatch,
   };
 
   saveToHistory(result);

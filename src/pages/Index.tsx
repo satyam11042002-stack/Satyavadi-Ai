@@ -1,16 +1,38 @@
-import { useState } from "react";
-import { Shield, Globe, Mic, Zap } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Shield, Globe, Mic, Zap, Database, Brain } from "lucide-react";
 import Header from "@/components/Header";
 import AnalysisInput from "@/components/AnalysisInput";
 import ResultPanel from "@/components/ResultPanel";
 import { AnalysisResult } from "@/lib/types";
 import { analyzeNews, analyzeUrl } from "@/lib/analyze";
 import { toast } from "sonner";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
+
+const PIPELINE_STEPS = [
+  { icon: Globe, label: "Detecting language..." },
+  { icon: Brain, label: "Extracting claims..." },
+  { icon: Database, label: "Matching against claims database..." },
+  { icon: Shield, label: "Verifying events & entities..." },
+  { icon: Zap, label: "Checking trusted sources..." },
+  { icon: Shield, label: "Detecting manipulation signals..." },
+  { icon: Brain, label: "Calculating trust score..." },
+];
 
 const Index = () => {
   const [result, setResult] = useState<AnalysisResult | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [currentStep, setCurrentStep] = useState(0);
+
+  useEffect(() => {
+    if (!isLoading) {
+      setCurrentStep(0);
+      return;
+    }
+    const interval = setInterval(() => {
+      setCurrentStep((prev) => (prev < PIPELINE_STEPS.length - 1 ? prev + 1 : prev));
+    }, 1800);
+    return () => clearInterval(interval);
+  }, [isLoading]);
 
   const handleAnalyze = async (text: string) => {
     setIsLoading(true);
@@ -63,6 +85,7 @@ const Index = () => {
               {[
                 { icon: Globe, label: "Multi-Language" },
                 { icon: Mic, label: "Voice Input" },
+                { icon: Database, label: "Claims Database" },
                 { icon: Zap, label: "AI Verified" },
               ].map(({ icon: Icon, label }) => (
                 <div key={label} className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full glass-card text-xs font-medium text-muted-foreground">
@@ -78,18 +101,49 @@ const Index = () => {
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            className="text-center py-16 space-y-4"
+            className="text-center py-16 space-y-6 max-w-md mx-auto"
           >
             <div className="relative inline-flex items-center justify-center w-20 h-20">
               <div className="absolute inset-0 rounded-full border-2 border-primary/20 animate-ping" />
               <div className="absolute inset-2 rounded-full border-2 border-t-primary border-r-transparent border-b-transparent border-l-transparent animate-spin" />
               <Shield className="h-8 w-8 text-primary" />
             </div>
-            <p className="text-sm text-muted-foreground font-medium">Running AI analysis pipeline...</p>
-            <div className="flex flex-col items-center gap-1 text-xs text-muted-foreground/70">
-              <span>Language Detection → Claim Extraction → Event Verification</span>
-              <span>Source Matching → Manipulation Detection → Trust Score</span>
+
+            <div className="space-y-2">
+              <AnimatePresence mode="wait">
+                {PIPELINE_STEPS.map((step, i) => {
+                  const StepIcon = step.icon;
+                  if (i !== currentStep) return null;
+                  return (
+                    <motion.div
+                      key={i}
+                      initial={{ opacity: 0, y: 8 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -8 }}
+                      className="flex items-center justify-center gap-2 text-sm font-medium text-foreground"
+                    >
+                      <StepIcon className="h-4 w-4 text-primary" />
+                      {step.label}
+                    </motion.div>
+                  );
+                })}
+              </AnimatePresence>
             </div>
+
+            <div className="flex items-center gap-1.5 justify-center">
+              {PIPELINE_STEPS.map((_, i) => (
+                <div
+                  key={i}
+                  className={`h-1.5 rounded-full transition-all duration-500 ${
+                    i <= currentStep ? "w-6 bg-primary" : "w-1.5 bg-muted-foreground/30"
+                  }`}
+                />
+              ))}
+            </div>
+
+            <p className="text-xs text-muted-foreground">
+              Step {currentStep + 1} of {PIPELINE_STEPS.length}
+            </p>
           </motion.div>
         )}
 
