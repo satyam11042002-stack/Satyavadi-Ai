@@ -1,14 +1,16 @@
 import { Verdict } from "@/lib/types";
-import { ShieldCheck, AlertTriangle, ShieldAlert } from "lucide-react";
+import { ShieldCheck, CheckCircle, Clock, HelpCircle, ShieldAlert } from "lucide-react";
 
 const config: Record<Verdict, { label: string; className: string; Icon: typeof ShieldCheck }> = {
-  real: { label: "Real News", className: "bg-success/10 text-success border-success/30", Icon: ShieldCheck },
-  misleading: { label: "Possibly Misleading", className: "bg-warning/10 text-warning border-warning/30", Icon: AlertTriangle },
-  fake: { label: "Fake News", className: "bg-destructive/10 text-destructive border-destructive/30", Icon: ShieldAlert },
+  verified_real: { label: "Verified Real", className: "bg-success/10 text-success border-success/30", Icon: ShieldCheck },
+  likely_real: { label: "Likely Real", className: "bg-success/10 text-success border-success/30", Icon: CheckCircle },
+  future_planned: { label: "Future / Planned", className: "bg-primary/10 text-primary border-primary/30", Icon: Clock },
+  unverified: { label: "Unverified", className: "bg-warning/10 text-warning border-warning/30", Icon: HelpCircle },
+  likely_fake: { label: "Likely Fake", className: "bg-destructive/10 text-destructive border-destructive/30", Icon: ShieldAlert },
 };
 
 const VerdictBadge = ({ verdict, size = "lg" }: { verdict: Verdict; size?: "sm" | "lg" }) => {
-  const { label, className, Icon } = config[verdict];
+  const { label, className, Icon } = config[verdict] || config.unverified;
   const isSmall = size === "sm";
 
   return (
