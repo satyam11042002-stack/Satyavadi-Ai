@@ -12,9 +12,10 @@ const getScoreColor = (score: number) => {
 };
 
 const getScoreLabel = (score: number) => {
-  if (score <= 30) return "Likely Fake";
-  if (score <= 60) return "Possibly Misleading";
-  return "Likely Real";
+  if (score <= 39) return "Likely False";
+  if (score <= 59) return "Unverified";
+  if (score <= 79) return "Likely True";
+  return "Highly Reliable";
 };
 
 const TrustScoreRing = ({ score, size = 140 }: TrustScoreRingProps) => {

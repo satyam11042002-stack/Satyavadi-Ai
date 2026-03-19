@@ -37,6 +37,14 @@ const layerStatusBg = (status: string) => {
   return "bg-destructive/10 border-destructive/20";
 };
 
+const verdictLabels: Record<string, string> = {
+  verified_real: "Verified Real",
+  likely_real: "Likely Real",
+  future_planned: "Future / Planned",
+  unverified: "Unverified",
+  likely_fake: "Likely Fake",
+};
+
 const ResultPanel = ({ result, onReset }: ResultPanelProps) => {
   const [isSpeaking, setIsSpeaking] = useState(false);
 
@@ -50,7 +58,7 @@ const ResultPanel = ({ result, onReset }: ResultPanelProps) => {
       setIsSpeaking(false);
       return;
     }
-    const verdictText = result.verdict === "real" ? "likely real" : result.verdict === "misleading" ? "possibly misleading" : "likely fake";
+    const verdictText = verdictLabels[result.verdict] || result.verdict;
     const speechText = `According to TruthLens analysis, this claim appears to be ${verdictText} with a trust score of ${result.trustScore} out of 100. ${result.explanation}`;
     const utterance = new SpeechSynthesisUtterance(speechText);
     utterance.rate = 0.95;
@@ -95,22 +103,40 @@ const ResultPanel = ({ result, onReset }: ResultPanelProps) => {
           </div>
         )}
 
-        {/* Trust Score + Probability */}
+        {/* Trust Score + Confidence */}
         <div className="flex flex-col sm:flex-row items-center gap-6">
           <TrustScoreRing score={result.trustScore} />
-          <div className="flex-1 w-full space-y-1.5">
-            <div className="flex justify-between text-sm">
-              <span className="font-medium text-foreground">Fake News Probability</span>
-              <span className="font-bold text-foreground">{result.probability}%</span>
+          <div className="flex-1 w-full space-y-3">
+            <div className="space-y-1.5">
+              <div className="flex justify-between text-sm">
+                <span className="font-medium text-foreground">Fake News Probability</span>
+                <span className="font-bold text-foreground">{result.probability}%</span>
+              </div>
+              <div className="h-3 rounded-full bg-muted overflow-hidden">
+                <motion.div
+                  initial={{ width: 0 }}
+                  animate={{ width: `${result.probability}%` }}
+                  transition={{ duration: 0.6, ease: "easeOut" }}
+                  className={`h-full rounded-full ${probabilityColor(result.probability)}`}
+                />
+              </div>
             </div>
-            <div className="h-3 rounded-full bg-muted overflow-hidden">
-              <motion.div
-                initial={{ width: 0 }}
-                animate={{ width: `${result.probability}%` }}
-                transition={{ duration: 0.6, ease: "easeOut" }}
-                className={`h-full rounded-full ${probabilityColor(result.probability)}`}
-              />
-            </div>
+            {result.confidence !== undefined && (
+              <div className="space-y-1.5">
+                <div className="flex justify-between text-sm">
+                  <span className="font-medium text-foreground">Confidence</span>
+                  <span className="font-bold text-foreground">{result.confidence}%</span>
+                </div>
+                <div className="h-3 rounded-full bg-muted overflow-hidden">
+                  <motion.div
+                    initial={{ width: 0 }}
+                    animate={{ width: `${result.confidence}%` }}
+                    transition={{ duration: 0.6, ease: "easeOut", delay: 0.2 }}
+                    className="h-full rounded-full bg-primary"
+                  />
+                </div>
+              </div>
+            )}
           </div>
         </div>
 
@@ -316,8 +342,7 @@ const ResultPanel = ({ result, onReset }: ResultPanelProps) => {
       {/* Explainable AI - Why this verdict */}
       <div className="rounded-2xl glass-card p-5 space-y-3">
         <h3 className="text-sm font-semibold text-foreground flex items-center gap-1.5">
-          <Lightbulb className="h-4 w-4 text-warning" /> Why This Claim Is{" "}
-          {result.verdict === "real" ? "Credible" : result.verdict === "misleading" ? "Possibly Misleading" : "Likely Fake"}
+          <Lightbulb className="h-4 w-4 text-warning" /> Why This Claim Is {verdictLabels[result.verdict] || result.verdict}
         </h3>
         <p className="text-sm text-muted-foreground leading-relaxed">{result.explanation}</p>
         {result.suspiciousKeywords.length > 0 && (

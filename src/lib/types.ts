@@ -1,4 +1,4 @@
-export type Verdict = "real" | "misleading" | "fake";
+export type Verdict = "verified_real" | "likely_real" | "future_planned" | "unverified" | "likely_fake";
 
 export interface AnalysisSignal {
   label: string;
@@ -36,6 +36,7 @@ export interface AnalysisResult {
   verdict: Verdict;
   probability: number;
   trustScore: number;
+  confidence?: number;
   reasons: string[];
   suspiciousKeywords: string[];
   factCheckSuggestions: string[];

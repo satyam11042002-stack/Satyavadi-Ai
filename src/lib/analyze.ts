@@ -56,6 +56,7 @@ function buildResult(
     verdict: data.verdict as Verdict,
     probability: data.probability ?? 50,
     trustScore: data.trustScore ?? (100 - (data.probability ?? 50)),
+    confidence: data.confidence,
     reasons: data.reasons || [],
     suspiciousKeywords: data.suspiciousKeywords || [],
     factCheckSuggestions: data.factCheckSuggestions || [],
