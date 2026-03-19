@@ -24,6 +24,13 @@ export interface ManipulationSignal {
   explanation: string;
 }
 
+export interface ClaimDatabaseMatch {
+  matched: boolean;
+  matchedClaim: string | null;
+  matchedStatus: string | null;
+  similarityScore: number | null;
+}
+
 export interface AnalysisResult {
   id: string;
   verdict: Verdict;
@@ -49,4 +56,5 @@ export interface AnalysisResult {
   manipulationSignals?: ManipulationSignal[];
   detectedLanguage?: string;
   detectedLanguageName?: string;
+  claimDatabaseMatch?: ClaimDatabaseMatch;
 }
