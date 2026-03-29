@@ -9,7 +9,7 @@ import {
   RotateCcw, AlertCircle, Lightbulb, Tag, ExternalLink,
   ShieldCheck, Users, MapPin, Calendar, Quote, Newspaper,
   AlertTriangle, Eye, Volume2, VolumeX, Database, CheckCircle2,
-  XCircle, HelpCircle
+  XCircle, HelpCircle, Globe
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
