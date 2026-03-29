@@ -59,7 +59,7 @@ const ResultPanel = ({ result, onReset }: ResultPanelProps) => {
       return;
     }
     const verdictText = verdictLabels[result.verdict] || result.verdict;
-    const speechText = `According to TruthLens analysis, this claim appears to be ${verdictText} with a trust score of ${result.trustScore} out of 100. ${result.explanation}`;
+    const speechText = `According to Satyavadi AI analysis, this claim appears to be ${verdictText} with a trust score of ${result.trustScore} out of 100. ${result.explanation}`;
     const utterance = new SpeechSynthesisUtterance(speechText);
     utterance.rate = 0.95;
     utterance.onend = () => setIsSpeaking(false);
