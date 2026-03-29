@@ -233,14 +233,55 @@ const ResultPanel = ({ result, onReset }: ResultPanelProps) => {
           </div>
         )}
 
+        {/* Real-Time Search Results */}
+        {result.searchResults && result.searchResults.length > 0 && (
+          <div className="space-y-2">
+            <h3 className="text-sm font-semibold text-foreground flex items-center gap-1.5">
+              <Globe className="h-4 w-4 text-primary" /> Real-Time Internet Verification
+            </h3>
+            <div className="px-3 py-2.5 rounded-xl bg-muted/50 border border-border/50 space-y-1.5">
+              <p className="text-xs text-muted-foreground mb-2">
+                <span className="font-semibold text-foreground">{result.trustedSourceCount || 0}</span> trusted source{(result.trustedSourceCount || 0) !== 1 ? "s" : ""} found
+                {(result.trustedSourceCount || 0) >= 2
+                  ? " — ✅ Strong confirmation"
+                  : (result.trustedSourceCount || 0) === 1
+                  ? " — ⚠️ Partial confirmation"
+                  : " — ❌ No trusted source confirmation"}
+              </p>
+              {result.searchResults.map((sr, i) => (
+                <a
+                  key={i}
+                  href={sr.link}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className={`block px-3 py-2 rounded-lg border transition-colors hover:bg-muted/80 ${
+                    sr.isTrusted ? "border-success/30 bg-success/5" : "border-border/50 bg-background/50"
+                  }`}
+                >
+                  <div className="flex items-start gap-2">
+                    {sr.isTrusted ? (
+                      <CheckCircle2 className="h-3.5 w-3.5 text-success shrink-0 mt-0.5" />
+                    ) : (
+                      <ExternalLink className="h-3.5 w-3.5 text-muted-foreground shrink-0 mt-0.5" />
+                    )}
+                    <div className="min-w-0">
+                      <p className="text-xs font-medium text-foreground line-clamp-1">{sr.title}</p>
+                      <p className="text-[10px] text-muted-foreground">{sr.domain}{sr.isTrusted ? " ✓ Trusted" : ""}</p>
+                    </div>
+                  </div>
+                </a>
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* Source Confirmation */}
         {result.matchingSources && result.matchingSources.length > 0 && (
           <div className="space-y-2">
             <h3 className="text-sm font-semibold text-foreground flex items-center gap-1.5">
-              <Newspaper className="h-4 w-4 text-success" /> Source Confirmation
+              <Newspaper className="h-4 w-4 text-success" /> AI Source Matching
             </h3>
             <div className="px-3 py-2.5 rounded-xl bg-success/5 border border-success/20">
-              <p className="text-xs text-muted-foreground mb-2">Sources reporting similar claim:</p>
               <div className="flex flex-wrap gap-1.5">
                 {result.matchingSources.map((source, i) => (
                   <span key={i} className="px-2.5 py-1 text-xs rounded-full bg-success/10 text-success font-medium border border-success/20">
@@ -249,14 +290,6 @@ const ResultPanel = ({ result, onReset }: ResultPanelProps) => {
                 ))}
               </div>
             </div>
-          </div>
-        )}
-        {result.matchingSources && result.matchingSources.length === 0 && (
-          <div className="px-3 py-2.5 rounded-xl bg-warning/5 border border-warning/20">
-            <h3 className="text-sm font-semibold text-foreground flex items-center gap-1.5 mb-1">
-              <Newspaper className="h-4 w-4 text-warning" /> Source Confirmation
-            </h3>
-            <p className="text-xs text-warning">No confirmation from major news sources.</p>
           </div>
         )}
 
