@@ -12,9 +12,12 @@ const Header = () => {
       <div className="container mx-auto flex items-center justify-between h-16 px-4">
         <Link to="/" className="flex items-center gap-2">
           <Shield className="h-7 w-7 text-primary" />
-          <span className="text-xl font-bold tracking-tight text-foreground">
-            TruthLens
-          </span>
+          <div className="flex flex-col leading-none">
+            <span className="text-xl font-bold tracking-tight text-foreground">
+              Satyavadi AI
+            </span>
+            <span className="text-[9px] text-muted-foreground tracking-widest uppercase">Powered by Intelligence</span>
+          </div>
         </Link>
         <nav className="flex items-center gap-1">
           <Link

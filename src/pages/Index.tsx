@@ -74,12 +74,12 @@ const Index = () => {
               <Shield className="h-8 w-8 text-primary" />
             </div>
             <h1 className="text-3xl md:text-5xl font-extrabold tracking-tight text-foreground leading-tight">
-              AI Misinformation Detection
+              Check if a news article is
               <br />
-              <span className="text-primary">Platform</span>
+              <span className="text-primary">fake in seconds</span>
             </h1>
             <p className="text-muted-foreground text-lg max-w-xl mx-auto">
-              Analyze news articles, WhatsApp forwards, and claims in any language. Get AI-powered trust scores with multi-layer verification.
+              AI + real-time internet verification. Paste any news text or URL and get instant results with proof links from trusted sources.
             </p>
             <div className="flex flex-wrap justify-center gap-3 pt-2">
               {[

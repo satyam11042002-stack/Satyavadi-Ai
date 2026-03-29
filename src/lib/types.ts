@@ -58,4 +58,14 @@ export interface AnalysisResult {
   detectedLanguage?: string;
   detectedLanguageName?: string;
   claimDatabaseMatch?: ClaimDatabaseMatch;
+  searchResults?: SearchResult[];
+  trustedSourceCount?: number;
+}
+
+export interface SearchResult {
+  title: string;
+  link: string;
+  snippet?: string;
+  isTrusted: boolean;
+  domain: string;
 }

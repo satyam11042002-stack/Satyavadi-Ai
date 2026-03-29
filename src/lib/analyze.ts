@@ -74,6 +74,8 @@ function buildResult(
     detectedLanguage: data.detectedLanguage,
     detectedLanguageName: data.detectedLanguageName,
     claimDatabaseMatch: data.claimDatabaseMatch,
+    searchResults: data.searchResults || [],
+    trustedSourceCount: data.trustedSourceCount ?? 0,
   };
 
   saveToHistory(result);
