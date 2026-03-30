@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.4";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -91,6 +92,105 @@ function findMatchingClaim(inputText: string) {
     if (sim > (best?.similarity ?? 0)) best = { claim: entry, similarity: sim };
   }
   return best && best.similarity >= 0.55 ? best : null;
+}
+
+// ── Supabase Client (service role for cache/usage) ──────────────────
+function getSupabaseAdmin() {
+  const url = Deno.env.get("SUPABASE_URL")!;
+  const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+  return createClient(url, serviceKey);
+}
+
+// ── Cache System ────────────────────────────────────────────────────
+function hashQuery(query: string): string {
+  const normalized = query.toLowerCase().trim().replace(/\s+/g, " ").slice(0, 300);
+  let hash = 0;
+  for (let i = 0; i < normalized.length; i++) {
+    const chr = normalized.charCodeAt(i);
+    hash = ((hash << 5) - hash) + chr;
+    hash |= 0;
+  }
+  return "q_" + Math.abs(hash).toString(36);
+}
+
+async function getCachedSearch(supabase: any, queryText: string) {
+  const hash = hashQuery(queryText);
+  const { data } = await supabase
+    .from("search_cache")
+    .select("*")
+    .eq("query_hash", hash)
+    .single();
+
+  if (!data) return null;
+
+  // Cache expires after 6 hours
+  const cacheAge = Date.now() - new Date(data.created_at).getTime();
+  if (cacheAge > 6 * 60 * 60 * 1000) {
+    await supabase.from("search_cache").delete().eq("id", data.id);
+    return null;
+  }
+
+  return { results: data.search_results, trustedCount: data.trusted_count, fromCache: true };
+}
+
+async function setCachedSearch(supabase: any, queryText: string, results: any[], trustedCount: number) {
+  const hash = hashQuery(queryText);
+  await supabase.from("search_cache").upsert({
+    query_hash: hash,
+    query_text: queryText.slice(0, 500),
+    search_results: results,
+    trusted_count: trustedCount,
+    created_at: new Date().toISOString(),
+  }, { onConflict: "query_hash" });
+}
+
+// ── Usage Tracking ──────────────────────────────────────────────────
+function getCurrentMonthKey(): string {
+  const now = new Date();
+  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+}
+
+async function getUsageInfo(supabase: any) {
+  const monthKey = getCurrentMonthKey();
+  const { data } = await supabase
+    .from("api_usage")
+    .select("*")
+    .eq("month_key", monthKey)
+    .single();
+
+  if (!data) {
+    return { usageCount: 0, maxLimit: 200, remaining: 200, limitReached: false };
+  }
+
+  const remaining = Math.max(0, data.max_limit - data.usage_count);
+  return {
+    usageCount: data.usage_count,
+    maxLimit: data.max_limit,
+    remaining,
+    limitReached: remaining <= 0,
+  };
+}
+
+async function incrementUsage(supabase: any) {
+  const monthKey = getCurrentMonthKey();
+  const { data: existing } = await supabase
+    .from("api_usage")
+    .select("*")
+    .eq("month_key", monthKey)
+    .single();
+
+  if (existing) {
+    await supabase
+      .from("api_usage")
+      .update({ usage_count: existing.usage_count + 1, updated_at: new Date().toISOString() })
+      .eq("id", existing.id);
+  } else {
+    await supabase.from("api_usage").insert({
+      month_key: monthKey,
+      usage_count: 1,
+      max_limit: 200,
+    });
+  }
 }
 
 // ── SerpAPI Search ──────────────────────────────────────────────────
@@ -245,7 +345,8 @@ serve(async (req) => {
   }
 
   try {
-    const { text, url } = await req.json();
+    const { text, url, forceInternetCheck } = await req.json();
+    const supabase = getSupabaseAdmin();
 
     let articleText = text;
     let extractedHeadline = "";
@@ -271,14 +372,49 @@ serve(async (req) => {
       );
     }
 
-    // Run claim matching + SerpAPI search in parallel
+    // Get usage info
+    const usageInfo = await getUsageInfo(supabase);
+
+    // Run claim matching
     const claimMatch = findMatchingClaim(articleText);
     const searchQuery = extractedHeadline || articleText.slice(0, 200);
-    const searchData = await searchWithSerpApi(searchQuery);
+
+    // ── Smart Search Decision ───────────────────────────────────────
+    let searchData = { results: [] as any[], trustedCount: 0 };
+    let searchSource: "cache" | "api" | "skipped" | "limit_reached" = "skipped";
+
+    // Step 1: Check cache first
+    const cached = await getCachedSearch(supabase, searchQuery);
+    if (cached) {
+      searchData = { results: cached.results, trustedCount: cached.trustedCount };
+      searchSource = "cache";
+      console.log("Search cache HIT for:", searchQuery.slice(0, 60));
+    } else if (usageInfo.limitReached) {
+      // Step 2: Check if limit reached
+      searchSource = "limit_reached";
+      console.log("API limit reached, skipping SerpAPI");
+    } else if (forceInternetCheck || !claimMatch) {
+      // Step 3: Call SerpAPI (if forced or no claim match = low initial confidence)
+      searchData = await searchWithSerpApi(searchQuery);
+      searchSource = "api";
+      await incrementUsage(supabase);
+      // Save to cache
+      if (searchData.results.length > 0) {
+        await setCachedSearch(supabase, searchQuery, searchData.results, searchData.trustedCount);
+      }
+      console.log("SerpAPI called, results cached for:", searchQuery.slice(0, 60));
+    } else {
+      // Step 4: Claim match found with high confidence → skip API
+      searchSource = "skipped";
+      console.log("High confidence claim match, skipping SerpAPI");
+    }
+
+    // Refresh usage after potential increment
+    const finalUsage = searchSource === "api" ? await getUsageInfo(supabase) : usageInfo;
 
     const searchSummary = searchData.results.length > 0
       ? searchData.results.map((r: any) => `[${r.domain}${r.isTrusted ? " ✓" : ""}] ${r.title}`).join("; ")
-      : "No search results found";
+      : "No search results available";
 
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
@@ -292,7 +428,7 @@ serve(async (req) => {
       body: JSON.stringify({
         model: "google/gemini-3-flash-preview",
         messages: [
-          { role: "system", content: buildSystemPrompt(claimMatch, { trustedCount: searchData.trustedCount, resultsSummary: searchSummary }) },
+          { role: "system", content: buildSystemPrompt(claimMatch, searchData.results.length > 0 ? { trustedCount: searchData.trustedCount, resultsSummary: searchSummary } : undefined) },
           { role: "user", content: `Analyze this news text for authenticity:\n\n${articleText.slice(0, 5000)}` },
         ],
       }),
@@ -331,9 +467,15 @@ serve(async (req) => {
       };
     }
 
-    // Attach search results
+    // Attach search results & metadata
     result.searchResults = searchData.results;
     result.trustedSourceCount = searchData.trustedCount;
+    result.searchSource = searchSource;
+    result.apiUsage = {
+      remaining: finalUsage.remaining,
+      limit: finalUsage.maxLimit,
+      used: finalUsage.usageCount,
+    };
 
     if (extractedHeadline) result.extractedHeadline = extractedHeadline;
     if (sourceUrl) result.sourceUrl = sourceUrl;
