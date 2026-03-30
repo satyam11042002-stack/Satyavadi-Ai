@@ -14,7 +14,57 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      api_usage: {
+        Row: {
+          id: string
+          max_limit: number
+          month_key: string
+          updated_at: string
+          usage_count: number
+        }
+        Insert: {
+          id?: string
+          max_limit?: number
+          month_key: string
+          updated_at?: string
+          usage_count?: number
+        }
+        Update: {
+          id?: string
+          max_limit?: number
+          month_key?: string
+          updated_at?: string
+          usage_count?: number
+        }
+        Relationships: []
+      }
+      search_cache: {
+        Row: {
+          created_at: string
+          id: string
+          query_hash: string
+          query_text: string
+          search_results: Json
+          trusted_count: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          query_hash: string
+          query_text: string
+          search_results?: Json
+          trusted_count?: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          query_hash?: string
+          query_text?: string
+          search_results?: Json
+          trusted_count?: number
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

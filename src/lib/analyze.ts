@@ -76,6 +76,8 @@ function buildResult(
     claimDatabaseMatch: data.claimDatabaseMatch,
     searchResults: data.searchResults || [],
     trustedSourceCount: data.trustedSourceCount ?? 0,
+    searchSource: data.searchSource,
+    apiUsage: data.apiUsage,
   };
 
   saveToHistory(result);
