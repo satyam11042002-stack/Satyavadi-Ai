@@ -60,6 +60,12 @@ export interface AnalysisResult {
   claimDatabaseMatch?: ClaimDatabaseMatch;
   searchResults?: SearchResult[];
   trustedSourceCount?: number;
+  searchSource?: "cache" | "api" | "skipped" | "limit_reached";
+  apiUsage?: {
+    remaining: number;
+    limit: number;
+    used: number;
+  };
 }
 
 export interface SearchResult {
