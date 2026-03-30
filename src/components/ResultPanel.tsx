@@ -233,6 +233,37 @@ const ResultPanel = ({ result, onReset }: ResultPanelProps) => {
           </div>
         )}
 
+        {/* Search Source & API Usage Status */}
+        {result.searchSource && (
+          <div className="flex flex-wrap items-center gap-2">
+            {result.searchSource === "cache" && (
+              <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-primary/10 text-primary text-xs font-medium border border-primary/20">
+                <Database className="h-3 w-3" /> Using cached result
+              </span>
+            )}
+            {result.searchSource === "api" && (
+              <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-success/10 text-success text-xs font-medium border border-success/20">
+                <Globe className="h-3 w-3" /> Verified using internet
+              </span>
+            )}
+            {result.searchSource === "skipped" && (
+              <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-muted text-muted-foreground text-xs font-medium border border-border/50">
+                <Zap className="h-3 w-3" /> Skipped for performance
+              </span>
+            )}
+            {result.searchSource === "limit_reached" && (
+              <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-warning/10 text-warning text-xs font-medium border border-warning/20">
+                <AlertTriangle className="h-3 w-3" /> Limit reached — AI-only result
+              </span>
+            )}
+            {result.apiUsage && (
+              <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-muted text-muted-foreground text-xs font-medium border border-border/50">
+                Internet Checks Left: {result.apiUsage.remaining}/{result.apiUsage.limit}
+              </span>
+            )}
+          </div>
+        )}
+
         {/* Real-Time Search Results */}
         {result.searchResults && result.searchResults.length > 0 && (
           <div className="space-y-2">
