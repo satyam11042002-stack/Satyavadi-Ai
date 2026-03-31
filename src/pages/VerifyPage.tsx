@@ -16,6 +16,8 @@ interface VerifyResult {
     misleadingInfo?: string | null;
   };
   correctedAnswer: string;
+  improvedVersion: string;
+  keyPoints: string[];
   finalVerdict: string;
 }
 
