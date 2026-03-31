@@ -134,7 +134,7 @@ const VerifyPage = () => {
 
               {/* Confidence Score */}
               <div className="flex justify-center">
-                <TrustScoreRing score={result.confidenceScore} size={120} label="Confidence" />
+                <TrustScoreRing score={result.confidenceScore} size={120} />
               </div>
 
               {/* Analysis */}
