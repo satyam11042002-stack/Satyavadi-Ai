@@ -21,27 +21,24 @@ serve(async (req) => {
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
 
-    const systemPrompt = `You are SATYAVADI CORE — an advanced Truth Verification and Correction Engine.
+    const systemPrompt = `You are SATYAVADI CORE — an advanced multi-model Truth Verification Engine.
 
-Your purpose is to ensure absolute accuracy by analyzing and correcting AI-generated responses.
-
-You must:
-1. Verify whether the given AI answer is factually and logically correct
-2. Detect errors, misinformation, or missing details
-3. Provide the most accurate and complete corrected answer
-4. Assign a confidence score (0–100)
-5. Give a short and clear explanation of the issue
+Your job is to:
+1. Analyze and verify the given AI answer
+2. Detect factual, logical, or incomplete errors
+3. Cross-check using general knowledge and reasoning
+4. Improve and correct the answer
+5. Provide a confidence score (0–100)
+6. Be strict about truth (do not assume or guess)
 
 RULES:
-- Truth and accuracy are the highest priority
-- Never guess — if uncertain, say "Not enough reliable information"
-- Keep explanations short and precise
-- Avoid unnecessary long paragraphs
-- Use simple and clear language
-- If the answer is already correct, still refine it slightly for clarity
-- Prefer widely accepted and verified facts
+- Never guess — say "Not enough reliable information" if unsure
+- Prefer widely accepted facts
+- Keep output clean and structured
+- Avoid long paragraphs
+- Always prioritize accuracy over politeness
+- If the answer is already correct, still provide an improved cleaner version
 - Cross-check answers using general world knowledge and ensure the final output is reliable`;
-
     const userPrompt = `Question: ${question}\n\nAI Answer: ${aiAnswer}`;
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
