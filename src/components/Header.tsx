@@ -31,6 +31,17 @@ const Header = () => {
             Analyze
           </Link>
           <Link
+            to="/verify"
+            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-1.5 ${
+              location.pathname === "/verify"
+                ? "bg-primary/10 text-primary"
+                : "text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            <BadgeCheck className="h-4 w-4" />
+            Verify
+          </Link>
+          <Link
             to="/history"
             className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-1.5 ${
               location.pathname === "/history"
