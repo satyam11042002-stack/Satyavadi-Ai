@@ -16,6 +16,8 @@ interface VerifyResult {
     misleadingInfo?: string | null;
   };
   correctedAnswer: string;
+  improvedVersion: string;
+  keyPoints: string[];
   finalVerdict: string;
 }
 
@@ -163,6 +165,24 @@ const VerifyPage = () => {
                 <h3 className="font-semibold text-foreground text-sm">✔ Corrected Answer</h3>
                 <p className="text-sm text-muted-foreground leading-relaxed">{result.correctedAnswer}</p>
               </div>
+
+              {/* Improved Version */}
+              <div className="rounded-xl border border-border bg-card p-5 space-y-2">
+                <h3 className="font-semibold text-foreground text-sm">🔄 Improved Version</h3>
+                <p className="text-sm text-muted-foreground leading-relaxed">{result.improvedVersion}</p>
+              </div>
+
+              {/* Key Points */}
+              {result.keyPoints && result.keyPoints.length > 0 && (
+                <div className="rounded-xl border border-border bg-card p-5 space-y-2">
+                  <h3 className="font-semibold text-foreground text-sm">📌 Key Points</h3>
+                  <ul className="text-sm text-muted-foreground space-y-1 list-disc list-inside">
+                    {result.keyPoints.map((point, i) => (
+                      <li key={i}>{point}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
 
               {/* Final Verdict */}
               <div className="rounded-xl border border-primary/20 bg-primary/5 p-4">
