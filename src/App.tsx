@@ -8,6 +8,7 @@ import Index from "./pages/Index";
 import HistoryPage from "./pages/HistoryPage";
 import VerifyPage from "./pages/VerifyPage";
 import NotFound from "./pages/NotFound";
+import Footer from "./components/Footer";
 
 const queryClient = new QueryClient();
 
@@ -18,12 +19,17 @@ const App = () => (
         <Toaster />
         <Sonner />
         <BrowserRouter>
-          <Routes>
-            <Route path="/" element={<Index />} />
-            <Route path="/history" element={<HistoryPage />} />
-            <Route path="/verify" element={<VerifyPage />} />
-            <Route path="*" element={<NotFound />} />
-          </Routes>
+          <div className="flex min-h-screen flex-col">
+            <div className="flex-1">
+              <Routes>
+                <Route path="/" element={<Index />} />
+                <Route path="/history" element={<HistoryPage />} />
+                <Route path="/verify" element={<VerifyPage />} />
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+            </div>
+            <Footer />
+          </div>
         </BrowserRouter>
       </TooltipProvider>
     </ThemeProvider>
