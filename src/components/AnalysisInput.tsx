@@ -120,11 +120,11 @@ const AnalysisInput = ({ onSubmit, onSubmitUrl, isLoading }: AnalysisInputProps)
   return (
     <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }} className="w-full max-w-3xl mx-auto">
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="w-full mb-4 glass-card">
-          <TabsTrigger value="text" className="flex-1 gap-1.5"><Search className="h-3.5 w-3.5" />Text</TabsTrigger>
-          <TabsTrigger value="url" className="flex-1 gap-1.5"><Link2 className="h-3.5 w-3.5" />URL</TabsTrigger>
-          <TabsTrigger value="whatsapp" className="flex-1 gap-1.5"><MessageSquare className="h-3.5 w-3.5" />WhatsApp</TabsTrigger>
-          <TabsTrigger value="screenshot" className="flex-1 gap-1.5"><ImageIcon className="h-3.5 w-3.5" />Screenshot</TabsTrigger>
+        <TabsList className="w-full mb-4 glass-card h-auto p-1">
+          <TabsTrigger value="text" className="flex-1 gap-1 sm:gap-1.5 px-1.5 sm:px-3 text-xs sm:text-sm"><Search className="h-3.5 w-3.5 shrink-0" />Text</TabsTrigger>
+          <TabsTrigger value="url" className="flex-1 gap-1 sm:gap-1.5 px-1.5 sm:px-3 text-xs sm:text-sm"><Link2 className="h-3.5 w-3.5 shrink-0" />URL</TabsTrigger>
+          <TabsTrigger value="whatsapp" className="flex-1 gap-1 sm:gap-1.5 px-1.5 sm:px-3 text-xs sm:text-sm"><MessageSquare className="h-3.5 w-3.5 shrink-0" /><span className="hidden xs:inline sm:inline">WhatsApp</span><span className="xs:hidden sm:hidden">WA</span></TabsTrigger>
+          <TabsTrigger value="screenshot" className="flex-1 gap-1 sm:gap-1.5 px-1.5 sm:px-3 text-xs sm:text-sm"><ImageIcon className="h-3.5 w-3.5 shrink-0" /><span className="hidden xs:inline sm:inline">Screenshot</span><span className="xs:hidden sm:hidden">Shot</span></TabsTrigger>
         </TabsList>
 
         <TabsContent value="text">
@@ -137,7 +137,7 @@ const AnalysisInput = ({ onSubmit, onSubmitUrl, isLoading }: AnalysisInputProps)
               <VoiceButton disabled={isLoading} />
             </div>
             <ListeningIndicator />
-            <div className="flex items-center justify-between">
+            <div className="flex flex-wrap items-center justify-between gap-2">
               <p className="text-xs text-muted-foreground">
                 {text.length < 20 ? `At least 20 characters required (${text.length}/20)` : `${text.length} characters • Any language supported`}
               </p>
@@ -155,7 +155,7 @@ const AnalysisInput = ({ onSubmit, onSubmitUrl, isLoading }: AnalysisInputProps)
               placeholder="https://example.com/news-article"
               className="w-full h-14 px-4 rounded-xl border border-input bg-card/70 backdrop-blur-sm text-card-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring text-sm"
               disabled={isLoading} />
-            <div className="flex items-center justify-between">
+            <div className="flex flex-wrap items-center justify-between gap-2">
               <p className="text-xs text-muted-foreground">Paste a full article URL to extract and analyze</p>
               <Button type="submit" disabled={!isValidUrl(url) || isLoading} size="lg" className="gap-2">
                 {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Link2 className="h-4 w-4" />}
@@ -188,7 +188,7 @@ const AnalysisInput = ({ onSubmit, onSubmitUrl, isLoading }: AnalysisInputProps)
                 </motion.div>
               )}
             </AnimatePresence>
-            <div className="flex items-center justify-between">
+            <div className="flex flex-wrap items-center justify-between gap-2">
               <p className="text-xs text-muted-foreground">
                 {whatsappText.length < 20 ? `At least 20 characters required (${whatsappText.length}/20)` : `${whatsappText.length} characters`}
               </p>
@@ -249,7 +249,7 @@ const AnalysisInput = ({ onSubmit, onSubmitUrl, isLoading }: AnalysisInputProps)
               </div>
             )}
 
-            <div className="flex items-center justify-between">
+            <div className="flex flex-wrap items-center justify-between gap-2">
               <p className="text-xs text-muted-foreground">
                 {!selectedImage ? "Upload a fake news screenshot to analyze" :
                   !extractedOcrText ? "Extract text first, then analyze" :
