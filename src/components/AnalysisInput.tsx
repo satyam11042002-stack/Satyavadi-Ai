@@ -137,7 +137,7 @@ const AnalysisInput = ({ onSubmit, onSubmitUrl, isLoading }: AnalysisInputProps)
               <VoiceButton disabled={isLoading} />
             </div>
             <ListeningIndicator />
-            <div className="flex items-center justify-between">
+            <div className="flex flex-wrap items-center justify-between gap-2">
               <p className="text-xs text-muted-foreground">
                 {text.length < 20 ? `At least 20 characters required (${text.length}/20)` : `${text.length} characters • Any language supported`}
               </p>
@@ -155,7 +155,7 @@ const AnalysisInput = ({ onSubmit, onSubmitUrl, isLoading }: AnalysisInputProps)
               placeholder="https://example.com/news-article"
               className="w-full h-14 px-4 rounded-xl border border-input bg-card/70 backdrop-blur-sm text-card-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring text-sm"
               disabled={isLoading} />
-            <div className="flex items-center justify-between">
+            <div className="flex flex-wrap items-center justify-between gap-2">
               <p className="text-xs text-muted-foreground">Paste a full article URL to extract and analyze</p>
               <Button type="submit" disabled={!isValidUrl(url) || isLoading} size="lg" className="gap-2">
                 {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Link2 className="h-4 w-4" />}
@@ -188,7 +188,7 @@ const AnalysisInput = ({ onSubmit, onSubmitUrl, isLoading }: AnalysisInputProps)
                 </motion.div>
               )}
             </AnimatePresence>
-            <div className="flex items-center justify-between">
+            <div className="flex flex-wrap items-center justify-between gap-2">
               <p className="text-xs text-muted-foreground">
                 {whatsappText.length < 20 ? `At least 20 characters required (${whatsappText.length}/20)` : `${whatsappText.length} characters`}
               </p>
@@ -249,7 +249,7 @@ const AnalysisInput = ({ onSubmit, onSubmitUrl, isLoading }: AnalysisInputProps)
               </div>
             )}
 
-            <div className="flex items-center justify-between">
+            <div className="flex flex-wrap items-center justify-between gap-2">
               <p className="text-xs text-muted-foreground">
                 {!selectedImage ? "Upload a fake news screenshot to analyze" :
                   !extractedOcrText ? "Extract text first, then analyze" :
