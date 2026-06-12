@@ -43,20 +43,54 @@ const VerifyPage = () => {
     try {
       const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
       const supabaseKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
-      const res = await fetch(`${supabaseUrl}/functions/v1/verify-answer`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${supabaseKey}`,
-        },
-        body: JSON.stringify({ question: question.trim(), aiAnswer: aiAnswer.trim() }),
-      });
+      if (!supabaseUrl || !supabaseKey) {
+        throw new Error("Backend not configured. Missing environment variables.");
+      }
+      const doFetch = async () => {
+        const ctrl = new AbortController();
+        const t = setTimeout(() => ctrl.abort(), 90_000);
+        try {
+          return await fetch(`${supabaseUrl}/functions/v1/verify-answer`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              apikey: supabaseKey,
+              Authorization: `Bearer ${supabaseKey}`,
+            },
+            body: JSON.stringify({ question: question.trim(), aiAnswer: aiAnswer.trim() }),
+            signal: ctrl.signal,
+          });
+        } finally {
+          clearTimeout(t);
+        }
+      };
+      let res: Response;
+      try {
+        res = await doFetch();
+      } catch (netErr) {
+        console.error("[verify-answer] network error (attempt 1):", netErr);
+        await new Promise((r) => setTimeout(r, 1500));
+        try {
+          res = await doFetch();
+        } catch (netErr2) {
+          console.error("[verify-answer] network error (attempt 2):", netErr2);
+          throw new Error(
+            !navigator.onLine
+              ? "You appear to be offline. Check your internet and try again."
+              : "Could not reach the verification service. Please retry in a few seconds."
+          );
+        }
+      }
       if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        throw new Error(err.error || "Verification failed");
+        const raw = await res.text().catch(() => "");
+        let parsed: any = null;
+        try { parsed = raw ? JSON.parse(raw) : null; } catch { /* ignore */ }
+        console.error(`[verify-answer] HTTP ${res.status}:`, parsed || raw);
+        throw new Error(parsed?.error || `Verification failed (${res.status}).`);
       }
       setResult(await res.json());
     } catch (err) {
+      console.error("Verify error:", err);
       toast.error(err instanceof Error ? err.message : "Verification failed");
     } finally {
       setIsLoading(false);
