@@ -6,6 +6,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
 import TrustScoreRing from "@/components/TrustScoreRing";
+import { callEdgeFunction } from "@/lib/edgeClient";
 
 interface VerifyResult {
   status: "correct" | "incorrect" | "partially_correct";

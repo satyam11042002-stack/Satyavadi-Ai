@@ -1,4 +1,5 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { useEffect } from "react";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 import { ThemeProvider } from "next-themes";
 import { Toaster as Sonner } from "@/components/ui/sonner";
@@ -9,10 +10,17 @@ import HistoryPage from "./pages/HistoryPage";
 import VerifyPage from "./pages/VerifyPage";
 import NotFound from "./pages/NotFound";
 import Footer from "./components/Footer";
+import { startBackendWarmUp } from "@/lib/edgeClient";
 
 const queryClient = new QueryClient();
 
-const App = () => (
+const App = () => {
+  useEffect(() => {
+    // Boot the backend immediately so the user's first request is never cold
+    startBackendWarmUp();
+  }, []);
+
+  return (
   <QueryClientProvider client={queryClient}>
     <ThemeProvider attribute="class" defaultTheme="light" enableSystem>
       <TooltipProvider>
@@ -34,6 +42,7 @@ const App = () => (
       </TooltipProvider>
     </ThemeProvider>
   </QueryClientProvider>
-);
+  );
+};
 
 export default App;
