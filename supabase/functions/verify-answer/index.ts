@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.4";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -6,14 +7,56 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
+const MAX_FIELD_LEN = 8000;
+
+function monthKey(): string {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+}
+
+async function checkAndIncrementUsage(): Promise<{ ok: boolean }> {
+  try {
+    const url = Deno.env.get("SUPABASE_URL");
+    const key = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+    if (!url || !key) return { ok: true };
+    const sb = createClient(url, key);
+    const mk = monthKey();
+    const { data } = await sb.from("api_usage").select("*").eq("month_key", mk).single();
+    if (data) {
+      if (data.usage_count >= data.max_limit) return { ok: false };
+      await sb.from("api_usage").update({ usage_count: data.usage_count + 1, updated_at: new Date().toISOString() }).eq("id", data.id);
+      return { ok: true };
+    }
+    await sb.from("api_usage").insert({ month_key: mk, usage_count: 1, max_limit: 200 });
+    return { ok: true };
+  } catch (e) {
+    console.error("usage tracking error:", e);
+    return { ok: true };
+  }
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
     const { question, aiAnswer } = await req.json();
-    if (!question || !aiAnswer) {
+    if (!question || !aiAnswer || typeof question !== "string" || typeof aiAnswer !== "string") {
       return new Response(JSON.stringify({ error: "Both question and aiAnswer are required" }), {
         status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    if (question.length > MAX_FIELD_LEN || aiAnswer.length > MAX_FIELD_LEN) {
+      return new Response(JSON.stringify({ error: `Each field must be under ${MAX_FIELD_LEN} characters` }), {
+        status: 413,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    const usage = await checkAndIncrementUsage();
+    if (!usage.ok) {
+      return new Response(JSON.stringify({ error: "Monthly usage limit reached. Try again next month." }), {
+        status: 429,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
