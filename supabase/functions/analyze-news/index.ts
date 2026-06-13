@@ -229,10 +229,52 @@ async function searchWithSerpApi(query: string) {
 }
 
 // ── Article URL Extraction ──────────────────────────────────────────
+function isPrivateHostname(hostname: string): boolean {
+  const h = hostname.toLowerCase();
+  if (h === "localhost" || h.endsWith(".localhost") || h === "ip6-localhost") return true;
+  // IPv6 loopback / link-local / unique-local
+  if (h === "::1" || h.startsWith("[::1") || h.startsWith("fe80") || h.startsWith("fc") || h.startsWith("fd")) return true;
+  // IPv4 literal check
+  const m = h.match(/^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/);
+  if (m) {
+    const [a, b] = [parseInt(m[1]), parseInt(m[2])];
+    if (a === 10) return true;
+    if (a === 127) return true;
+    if (a === 0) return true;
+    if (a === 169 && b === 254) return true;
+    if (a === 172 && b >= 16 && b <= 31) return true;
+    if (a === 192 && b === 168) return true;
+    if (a === 100 && b >= 64 && b <= 127) return true; // CGNAT
+    if (a >= 224) return true; // multicast / reserved
+  }
+  // Block bare hostnames with no dot (intranet hosts)
+  if (!h.includes(".")) return true;
+  // Block .internal/.local mDNS
+  if (h.endsWith(".local") || h.endsWith(".internal")) return true;
+  return false;
+}
+
 async function extractArticleFromUrl(url: string) {
+  let parsed: URL;
+  try {
+    parsed = new URL(url);
+  } catch {
+    throw new Error("Invalid URL.");
+  }
+  if (parsed.protocol !== "http:" && parsed.protocol !== "https:") {
+    throw new Error("Only http(s) URLs are supported.");
+  }
+  if (isPrivateHostname(parsed.hostname)) {
+    throw new Error("This URL is not allowed.");
+  }
   const fetchRes = await fetch(url, {
     headers: { "User-Agent": "Mozilla/5.0 (compatible; SatyavadiAI/1.0)" },
+    redirect: "manual",
   });
+  // Block redirects to internal targets
+  if (fetchRes.status >= 300 && fetchRes.status < 400) {
+    throw new Error("Redirected URL not allowed.");
+  }
   if (!fetchRes.ok) throw new Error("Could not fetch the article. Try pasting the article text directly.");
   const html = await fetchRes.text();
 
