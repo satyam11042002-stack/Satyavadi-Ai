@@ -1,10 +1,40 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.4";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
+
+const MAX_B64_LEN = 14_000_000; // ~10 MB image after base64 expansion
+const BASE64_RE = /^[A-Za-z0-9+/=\r\n]+$/;
+
+function monthKey(): string {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+}
+
+async function checkAndIncrementUsage(): Promise<{ ok: boolean; remaining: number }> {
+  try {
+    const url = Deno.env.get("SUPABASE_URL");
+    const key = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+    if (!url || !key) return { ok: true, remaining: -1 };
+    const sb = createClient(url, key);
+    const mk = monthKey();
+    const { data } = await sb.from("api_usage").select("*").eq("month_key", mk).single();
+    if (data) {
+      if (data.usage_count >= data.max_limit) return { ok: false, remaining: 0 };
+      await sb.from("api_usage").update({ usage_count: data.usage_count + 1, updated_at: new Date().toISOString() }).eq("id", data.id);
+      return { ok: true, remaining: data.max_limit - data.usage_count - 1 };
+    }
+    await sb.from("api_usage").insert({ month_key: mk, usage_count: 1, max_limit: 200 });
+    return { ok: true, remaining: 199 };
+  } catch (e) {
+    console.error("usage tracking error:", e);
+    return { ok: true, remaining: -1 };
+  }
+}
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -17,6 +47,28 @@ serve(async (req) => {
       return new Response(
         JSON.stringify({ error: "No image data provided" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    if (typeof imageBase64 !== "string" || imageBase64.length > MAX_B64_LEN) {
+      return new Response(
+        JSON.stringify({ error: "Image too large (max ~10MB)" }),
+        { status: 413, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+    const stripped = imageBase64.replace(/^data:image\/[a-z0-9.+-]+;base64,/i, "");
+    if (!BASE64_RE.test(stripped)) {
+      return new Response(
+        JSON.stringify({ error: "Invalid base64 image data" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    const usage = await checkAndIncrementUsage();
+    if (!usage.ok) {
+      return new Response(
+        JSON.stringify({ error: "Monthly usage limit reached. Try again next month." }),
+        { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
