@@ -111,7 +111,7 @@ function isGibberish(raw: string): boolean {
   // Repeated-word spam: e.g. "meow meow meow meow"
   const unique = new Set(words);
   if (unique.size <= 2 && words.length >= 4) return true;
-  if (unique.size / words.length < 0.35 && words.length >= 6) return true;
+  if (unique.size / words.length < 0.35 && words.length >= 6 && words.length < 30) return true;
 
   // Keyboard mash: long tokens with no vowels, e.g. "asdfghjkl", "qwertyuiop"
   const noVowelLong = words.filter((w) => w.length >= 6 && !/[aeiouAEIOU]/.test(w));
