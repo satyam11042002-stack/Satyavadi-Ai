@@ -448,6 +448,18 @@ serve(async (req) => {
       );
     }
 
+    // ── Gibberish gate: never waste AI / SerpAPI on nonsense ────────
+    if (isGibberish(articleText)) {
+      console.log("Gibberish input rejected:", articleText.slice(0, 80));
+      return new Response(
+        JSON.stringify({
+          error: "This doesn't appear to be a factual claim. Please enter a real statement or news claim to verify.",
+          code: "not_a_claim",
+        }),
+        { status: 422, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
     // Get usage info
     const usageInfo = await getUsageInfo(supabase);
 
