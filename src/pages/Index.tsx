@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Shield, Globe, Mic, Zap, Database, Brain, ImageIcon, AlertTriangle } from "lucide-react";
 import Header from "@/components/Header";
 import AnalysisInput from "@/components/AnalysisInput";
@@ -7,6 +7,7 @@ import { AnalysisResult } from "@/lib/types";
 import { analyzeNews, analyzeUrl } from "@/lib/analyze";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
+import { validateClaim } from "@/lib/claimValidator";
 
 const PIPELINE_STEPS = [
   { icon: Globe, label: "Detecting language..." },
@@ -22,6 +23,10 @@ const Index = () => {
   const [result, setResult] = useState<AnalysisResult | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [currentStep, setCurrentStep] = useState(0);
+  // Duplicate-submit guard: remembers the last inflight/completed input so
+  // rapid double-clicks or repeated identical submissions don't burn quota.
+  const inflightRef = useRef<string | null>(null);
+  const lastSubmittedRef = useRef<string | null>(null);
 
   useEffect(() => {
     if (!isLoading) { setCurrentStep(0); return; }
@@ -32,17 +37,52 @@ const Index = () => {
   }, [isLoading]);
 
   const handleAnalyze = async (text: string) => {
+    if (isLoading) return; // hard block re-entry while a request is inflight
+    const validationError = validateClaim(text);
+    if (validationError) {
+      toast.error(validationError);
+      return;
+    }
+    const key = `text:${text}`;
+    if (inflightRef.current === key) return;
+    if (lastSubmittedRef.current === key && result) {
+      toast.info("You just verified this — showing the previous result.");
+      return;
+    }
+    inflightRef.current = key;
     setIsLoading(true); setResult(null);
-    try { setResult(await analyzeNews(text)); }
-    catch (err) { toast.error(err instanceof Error ? err.message : "Analysis failed"); }
-    finally { setIsLoading(false); }
+    try {
+      const r = await analyzeNews(text);
+      lastSubmittedRef.current = key;
+      setResult(r);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Analysis failed");
+    } finally {
+      inflightRef.current = null;
+      setIsLoading(false);
+    }
   };
 
   const handleAnalyzeUrl = async (url: string) => {
+    if (isLoading) return;
+    const key = `url:${url}`;
+    if (inflightRef.current === key) return;
+    if (lastSubmittedRef.current === key && result) {
+      toast.info("You just verified this URL — showing the previous result.");
+      return;
+    }
+    inflightRef.current = key;
     setIsLoading(true); setResult(null);
-    try { setResult(await analyzeUrl(url)); }
-    catch (err) { toast.error(err instanceof Error ? err.message : "Could not analyze this URL"); }
-    finally { setIsLoading(false); }
+    try {
+      const r = await analyzeUrl(url);
+      lastSubmittedRef.current = key;
+      setResult(r);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Could not analyze this URL");
+    } finally {
+      inflightRef.current = null;
+      setIsLoading(false);
+    }
   };
 
   return (

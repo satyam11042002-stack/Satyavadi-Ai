@@ -256,11 +256,9 @@ const ResultPanel = ({ result, onReset }: ResultPanelProps) => {
                 <AlertTriangle className="h-3 w-3" /> Limit reached — AI-only result
               </span>
             )}
-            {result.apiUsage && (
-              <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-muted text-muted-foreground text-xs font-medium border border-border/50">
-                Internet Checks Left: {result.apiUsage.remaining}/{result.apiUsage.limit}
-              </span>
-            )}
+            {/* Internal quota counter intentionally hidden — we cannot mirror
+                the live SerpAPI dashboard, so showing a stale number would be
+                misleading. Backend still enforces the cap silently. */}
           </div>
         )}
 
@@ -285,7 +283,8 @@ const ResultPanel = ({ result, onReset }: ResultPanelProps) => {
                   href={sr.link}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className={`block px-3 py-2 rounded-lg border transition-colors hover:bg-muted/80 ${
+                  title={`Open article on ${sr.domain}`}
+                  className={`block px-3 py-2 rounded-lg border cursor-pointer transition-all hover:-translate-y-0.5 hover:shadow-md hover:bg-muted/80 ${
                     sr.isTrusted ? "border-success/30 bg-success/5" : "border-border/50 bg-background/50"
                   }`}
                 >
@@ -314,11 +313,24 @@ const ResultPanel = ({ result, onReset }: ResultPanelProps) => {
             </h3>
             <div className="px-3 py-2.5 rounded-xl bg-success/5 border border-success/20">
               <div className="flex flex-wrap gap-1.5">
-                {result.matchingSources.map((source, i) => (
-                  <span key={i} className="px-2.5 py-1 text-xs rounded-full bg-success/10 text-success font-medium border border-success/20">
-                    {source}
-                  </span>
-                ))}
+                {result.matchingSources.map((source, i) => {
+                  const query = encodeURIComponent(
+                    `${source} ${result.mainClaim || result.extractedHeadline || ""}`.trim()
+                  );
+                  return (
+                    <a
+                      key={i}
+                      href={`https://www.google.com/search?q=${query}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      title={`Search ${source} for this claim`}
+                      className="inline-flex items-center gap-1 px-2.5 py-1 text-xs rounded-full bg-success/10 text-success font-medium border border-success/20 cursor-pointer transition-all hover:-translate-y-0.5 hover:bg-success/20"
+                    >
+                      {source}
+                      <ExternalLink className="h-3 w-3" />
+                    </a>
+                  );
+                })}
               </div>
             </div>
           </div>
