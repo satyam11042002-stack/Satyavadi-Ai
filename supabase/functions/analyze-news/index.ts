@@ -94,6 +94,40 @@ function findMatchingClaim(inputText: string) {
   return best && best.similarity >= 0.55 ? best : null;
 }
 
+// ── Gibberish / Nonsense Detection ─────────────────────────────────
+// Returns true when the input does NOT look like a real factual claim.
+// Runs BEFORE any AI or SerpAPI call to save quota.
+function isGibberish(raw: string): boolean {
+  const text = raw.trim();
+  if (text.length < 15) return true;
+
+  // Strip emoji/symbols, keep letters/digits/space
+  const letters = text.replace(/[^\p{L}\p{N}\s]/gu, "").trim();
+  if (letters.length < 10) return true; // emoji-only or symbol spam
+
+  const words = letters.toLowerCase().split(/\s+/).filter(Boolean);
+  if (words.length < 4) return true; // needs at least a short sentence
+
+  // Repeated-word spam: e.g. "meow meow meow meow"
+  const unique = new Set(words);
+  if (unique.size <= 2 && words.length >= 4) return true;
+  if (unique.size / words.length < 0.35 && words.length >= 6) return true;
+
+  // Keyboard mash: long tokens with no vowels, e.g. "asdfghjkl", "qwertyuiop"
+  const noVowelLong = words.filter((w) => w.length >= 6 && !/[aeiouAEIOU]/.test(w));
+  if (noVowelLong.length / words.length > 0.4) return true;
+
+  // Ratio of "dictionary-looking" words: at least ONE vowel and length 2-15
+  const wordy = words.filter((w) => /[aeiou]/i.test(w) && w.length <= 15);
+  if (wordy.length / words.length < 0.55) return true;
+
+  // Average word length sanity (real prose sits between ~3 and ~9)
+  const avgLen = letters.replace(/\s/g, "").length / words.length;
+  if (avgLen > 12) return true;
+
+  return false;
+}
+
 // ── Supabase Client (service role for cache/usage) ──────────────────
 function getSupabaseAdmin() {
   const url = Deno.env.get("SUPABASE_URL")!;
