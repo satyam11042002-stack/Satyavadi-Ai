@@ -26,7 +26,9 @@ export function validateClaim(raw: string): string | null {
   if (unique.size <= 2 && words.length >= 4) {
     return "This doesn't appear to be a factual claim. Please enter a real statement or news claim to verify.";
   }
-  if (words.length >= 6 && unique.size / words.length < 0.35) {
+  // Only enforce diversity on short inputs; long real prose naturally
+  // repeats common words ("the", "and", etc.) and shouldn't be flagged.
+  if (words.length >= 6 && words.length < 30 && unique.size / words.length < 0.35) {
     return "This doesn't appear to be a factual claim. Please enter a real statement or news claim to verify.";
   }
 
