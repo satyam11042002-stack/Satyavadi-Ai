@@ -52,6 +52,28 @@ const Header = () => {
             <History className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
             <span className="hidden xs:inline sm:inline">History</span>
           </Link>
+          <Link
+            to="/jansatya"
+            className={`px-2 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-medium transition-colors flex items-center gap-1 sm:gap-1.5 ${
+              location.pathname === "/jansatya"
+                ? "bg-primary/10 text-primary"
+                : "text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            <Landmark className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+            JanSatya
+          </Link>
+          <Link
+            to="/history"
+            className={`hidden px-2 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-medium transition-colors items-center gap-1 sm:gap-1.5 ${
+              location.pathname === "/history"
+                ? "bg-primary/10 text-primary"
+                : "text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            <History className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+            <span className="hidden xs:inline sm:inline">History</span>
+          </Link>
           <Button
             variant="ghost"
             size="icon"
