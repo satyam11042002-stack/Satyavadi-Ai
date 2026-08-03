@@ -1,4 +1,4 @@
-import { Shield, History, Moon, Sun, BadgeCheck } from "lucide-react";
+import { Shield, History, Moon, Sun, BadgeCheck, Landmark } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { useTheme } from "next-themes";
 import { Button } from "@/components/ui/button";
