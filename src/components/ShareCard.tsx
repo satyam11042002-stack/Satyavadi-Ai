@@ -1,6 +1,6 @@
 import { AnalysisResult } from "@/lib/types";
-import { Shield } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import Logo from "@/components/Logo";
 import { toast } from "sonner";
 
 interface ShareCardProps {
