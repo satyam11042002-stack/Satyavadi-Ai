@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { Shield, Globe, Mic, Zap, Database, Brain, ImageIcon, AlertTriangle } from "lucide-react";
+import Logo from "@/components/Logo";
 import Header from "@/components/Header";
 import AnalysisInput from "@/components/AnalysisInput";
 import ResultPanel from "@/components/ResultPanel";
