@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { Shield, CheckCircle, XCircle, AlertTriangle, Send, RotateCcw } from "lucide-react";
+import { CheckCircle, XCircle, AlertTriangle, Send, RotateCcw } from "lucide-react";
+import Logo from "@/components/Logo";
 import Header from "@/components/Header";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
