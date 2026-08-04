@@ -103,7 +103,7 @@ const Index = () => {
               <span className="text-sm font-bold text-destructive">Stop Fake News Before It Spreads</span>
             </motion.div>
 
-            <div className="inline-flex items-center justify-center mb-2">
+            <div className="flex items-center justify-center mb-2">
               <Logo className="h-16" />
             </div>
             <h1 className="text-3xl md:text-5xl font-extrabold tracking-tight text-foreground leading-tight">
