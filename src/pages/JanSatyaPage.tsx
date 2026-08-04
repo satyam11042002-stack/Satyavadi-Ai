@@ -394,7 +394,7 @@ const JanSatyaPage = () => {
                 </div>
               </Section>
 
-              <motion.div {...fade(8)} className="rounded-2xl border border-warning/30 bg-warning/5 p-4 flex gap-3">
+              <motion.div {...fade(9)} className="rounded-2xl border border-warning/30 bg-warning/5 p-4 flex gap-3">
                 <Info className="h-4 w-4 text-warning mt-0.5 shrink-0" />
                 <p className="text-xs sm:text-sm text-foreground/80">
                   This analysis is AI-generated using publicly available information and should not be treated as legal advice.
