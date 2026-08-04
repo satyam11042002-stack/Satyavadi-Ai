@@ -2,6 +2,7 @@ import { useRef, useState } from "react";
 import {
   Landmark, Search, Loader2, Building2, Users, GraduationCap, Newspaper,
   FileText, ExternalLink, CalendarClock, Info, HelpCircle, TrendingUp, Sparkles,
+  Scale, ScrollText, BookOpen, Globe, Clock, ShieldCheck, Bot, ListChecks,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
@@ -68,9 +69,29 @@ const fade = (i = 0) => ({
   transition: { duration: 0.4, delay: i * 0.06 },
 });
 
+/** Maps a free-text source type to an icon + readable label. Presentation only. */
+const sourceMeta = (type = "") => {
+  const t = type.toLowerCase();
+  if (t.includes("parliament") || t.includes("lok sabha") || t.includes("rajya"))
+    return { icon: Scale, label: "Parliament" };
+  if (t.includes("gazette") || t.includes("notification"))
+    return { icon: ScrollText, label: "Gazette" };
+  if (t.includes("ministry") || t.includes("department"))
+    return { icon: Building2, label: "Ministry" };
+  if (t.includes("research") || t.includes("study") || t.includes("think"))
+    return { icon: BookOpen, label: "Research" };
+  if (t.includes("gov")) return { icon: Landmark, label: "Government" };
+  return { icon: Globe, label: type || "Public Source" };
+};
+
+const hostOf = (url: string) => {
+  try { return new URL(url).hostname.replace(/^www\./, ""); } catch { return url; }
+};
+
 const JanSatyaPage = () => {
   const [query, setQuery] = useState("");
   const [report, setReport] = useState<JanSatyaReport | null>(null);
+  const [generatedAt, setGeneratedAt] = useState<Date | null>(null);
   const [activeTopic, setActiveTopic] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const inflight = useRef(false);
@@ -89,6 +110,7 @@ const JanSatyaPage = () => {
     try {
       const data = await callEdgeFunction("jansatya-report", { query: q });
       setReport(data);
+      setGeneratedAt(new Date());
     } catch (err) {
       console.error("JanSatya error:", err);
       toast.error(err instanceof Error ? err.message : "Could not generate the report");
