@@ -55,7 +55,7 @@ const ShareCard = ({ result }: ShareCardProps) => {
     <div className="space-y-3">
       <div className="rounded-xl border border-border bg-gradient-to-br from-card to-muted p-5 space-y-4">
         <div className="flex items-center gap-2">
-          <Shield className="h-5 w-5 text-primary" />
+          <Logo className="h-6" />
           <span className="font-bold text-foreground text-sm">Satyavadi AI</span>
           <span className="text-[10px] text-muted-foreground ml-auto">Powered by Intelligence</span>
         </div>
