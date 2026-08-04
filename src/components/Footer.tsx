@@ -1,11 +1,11 @@
-import { Shield } from "lucide-react";
+import Logo from "@/components/Logo";
 
 const Footer = () => {
   return (
     <footer className="w-full border-t border-border/60 bg-background/60 backdrop-blur-sm mt-16">
       <div className="container mx-auto px-4 py-6 flex flex-col sm:flex-row items-center justify-between gap-3">
         <div className="flex items-center gap-2 text-sm text-muted-foreground">
-          <Shield className="h-4 w-4 text-primary" />
+          <Logo className="h-6" />
           <span className="font-semibold text-foreground">Satyavadi AI</span>
           <span className="hidden sm:inline">— AI Fake News Detector</span>
         </div>

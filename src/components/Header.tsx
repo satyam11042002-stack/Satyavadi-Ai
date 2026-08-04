@@ -1,7 +1,8 @@
-import { Shield, History, Moon, Sun, BadgeCheck, Landmark } from "lucide-react";
+import { History, Moon, Sun, BadgeCheck, Landmark } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { useTheme } from "next-themes";
 import { Button } from "@/components/ui/button";
+import Logo from "@/components/Logo";
 
 const Header = () => {
   const location = useLocation();
@@ -11,7 +12,7 @@ const Header = () => {
     <header className="w-full border-b border-border bg-background/80 backdrop-blur-sm sticky top-0 z-50">
       <div className="container mx-auto flex items-center justify-between h-16 px-3 sm:px-4 gap-2 max-w-full">
         <Link to="/" className="flex items-center gap-1.5 sm:gap-2 min-w-0 shrink">
-          <Shield className="h-6 w-6 sm:h-7 sm:w-7 text-primary shrink-0" />
+          <Logo className="h-8 sm:h-10 shrink-0" />
           <div className="flex flex-col leading-none min-w-0">
             <span className="text-base sm:text-xl font-bold tracking-tight text-foreground truncate">
               Satyavadi AI

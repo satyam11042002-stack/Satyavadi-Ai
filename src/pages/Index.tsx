@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { Shield, Globe, Mic, Zap, Database, Brain, ImageIcon, AlertTriangle } from "lucide-react";
+import Logo from "@/components/Logo";
 import Header from "@/components/Header";
 import AnalysisInput from "@/components/AnalysisInput";
 import ResultPanel from "@/components/ResultPanel";
@@ -102,8 +103,8 @@ const Index = () => {
               <span className="text-sm font-bold text-destructive">Stop Fake News Before It Spreads</span>
             </motion.div>
 
-            <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-primary/10 mb-2">
-              <Shield className="h-8 w-8 text-primary" />
+            <div className="flex items-center justify-center mb-2">
+              <Logo className="h-16" />
             </div>
             <h1 className="text-3xl md:text-5xl font-extrabold tracking-tight text-foreground leading-tight">
               Check if a news article is
@@ -135,7 +136,7 @@ const Index = () => {
             <div className="relative inline-flex items-center justify-center w-20 h-20">
               <div className="absolute inset-0 rounded-full border-2 border-primary/20 animate-ping" />
               <div className="absolute inset-2 rounded-full border-2 border-t-primary border-r-transparent border-b-transparent border-l-transparent animate-spin" />
-              <Shield className="h-8 w-8 text-primary" />
+              <Logo className="h-9" />
             </div>
             <div className="space-y-2">
               <AnimatePresence mode="wait">

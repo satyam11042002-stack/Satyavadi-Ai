@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { Shield, CheckCircle, XCircle, AlertTriangle, Send, RotateCcw } from "lucide-react";
+import { CheckCircle, XCircle, AlertTriangle, Send, RotateCcw } from "lucide-react";
+import Logo from "@/components/Logo";
 import Header from "@/components/Header";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -68,8 +69,8 @@ const VerifyPage = () => {
       <Header />
       <main className="container mx-auto px-4 py-12 md:py-20 max-w-2xl">
         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="text-center mb-8 space-y-3">
-          <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-primary/10">
-            <Shield className="h-7 w-7 text-primary" />
+          <div className="inline-flex items-center justify-center">
+            <Logo className="h-14" />
           </div>
           <h1 className="text-2xl md:text-4xl font-extrabold tracking-tight text-foreground">
             Verify AI Answer
