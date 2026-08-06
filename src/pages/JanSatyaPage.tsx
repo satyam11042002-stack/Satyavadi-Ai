@@ -14,6 +14,7 @@ import {
   Accordion, AccordionContent, AccordionItem, AccordionTrigger,
 } from "@/components/ui/accordion";
 import { callEdgeFunction } from "@/lib/edgeClient";
+import JanSatyaPerspectiveAnalysis from "@/components/JanSatyaPerspectiveAnalysis";
 
 interface JanSatyaReport {
   title: string;
@@ -225,6 +226,8 @@ const JanSatyaPage = () => {
               </motion.div>
 
               {/* 1. Executive Summary */}
+              <JanSatyaPerspectiveAnalysis report={report} />
+
               <Section index={1} icon={FileText} title="Executive Summary" delay={1}>
                 <p className="text-sm leading-relaxed text-foreground/85">{report.executiveSummary}</p>
               </Section>
